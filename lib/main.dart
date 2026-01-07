@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'models/user_model.dart'; // Certifique-se de que o caminho está correto
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/login_screen.dart'; // Importe sua tela de login
 
 void main() async {
+  // 1. Garante a inicialização dos bindings do Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
-  const supabaseUrl = 'https://ympsuhothfzknpjlsczh.supabase.co';
-  const supabaseKey = 'sb_publishable_8m2q4kmmeLVrEllJmqMbEA_sz0vX2Mh';
- 
+  // 2. Carrega as variáveis do .env
+  await dotenv.load(fileName: ".env");
+
+  // 3. Inicializa o Supabase usando as chaves do .env
   await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseKey,
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_KEY']!,
   );
 
   runApp(const MyApp());
@@ -19,51 +22,13 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Função que busca os dados (Lógica que você testou no Node, agora em Dart)
-  Future<UserModel> fetchUserData() async {
-    final response = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('email', 'teste@empresa.com') // O usuário que inserimos antes
-        .single();
-    
-    return UserModel.fromJson(response);
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Teste de Conexão Supabase')),
-        body: FutureBuilder<UserModel>(
-          future: fetchUserData(),
-          builder: (context, snapshot) {
-            // Enquanto carrega...
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            // Se der erro (ex: internet ou banco)...
-            if (snapshot.hasError) {
-              return Center(child: Text('Erro: ${snapshot.error}'));
-            }
-
-            // Se der certo!
-            final user = snapshot.data!;
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 60),
-                  Text('Conectado como: ${user.fullName}', 
-                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Text('Cargo: ${user.jobTitle ?? "Não informado"}'),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+      debugShowCheckedModeBanner: false,
+      title: 'Ponto Eletrônico',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const LoginScreen(), // Começa pela tela de login
     );
   }
 }

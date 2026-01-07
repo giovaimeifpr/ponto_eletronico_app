@@ -66,3 +66,6 @@ local.properties
 
 # Web específico
 .metadata
+
+# Senhas e chaves
+.env
