@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home.dart'; // Certifique-se de que o caminho está correto
+import '../services/login_services.dart';
+import 'home.dart';
+import '../core/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,46 +11,51 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Controladores e Serviços
   final _emailController = TextEditingController();
+  final LoginService _loginService = LoginService();
+  
   bool _isLoading = false;
 
+  // Lógica de UI para processar o clique no botão
   Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    
+    if (email.isEmpty) {
+      _showSnackBar('Por favor, digite seu e-mail');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final email = _emailController.text.trim();
+      // Chama a camada de serviço
+      final success = await _loginService.login(email);
 
-      // Verificação simples: Buscamos o usuário na sua tabela 'users' pelo e-mail
-      final data = await Supabase.instance.client
-          .from('users')
-          .select()
-          .eq('email', email)
-          .maybeSingle();
-
-      if (data != null) {
-        // Login bem-sucedido: Navega para a Home e remove a tela de login da pilha
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
+      if (success && mounted) {
+        // Navegação em caso de sucesso
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(userEmail: email),
+          ),
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('E-mail não encontrado!')),
-          );
-        }
+        _showSnackBar('E-mail não cadastrado no sistema');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao conectar: $e')),
-        );
-      }
+      // Captura erros tratados pelo Service (ex: sem internet)
+      _showSnackBar(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // Função utilitária para mensagens rápidas (SnackBar)
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -60,35 +66,57 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_person, size: 80, color: Colors.blue),
-            const SizedBox(height: 20),
-            const Text(
-              'Ponto Eletrônico',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            _buildHeader(),
             const SizedBox(height: 40),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'E-mail do Funcionário',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
+            _buildEmailField(),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                child: _isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white) 
-                  : const Text('Entrar'),
-              ),
-            ),
+            _buildLoginButton(),
           ],
         ),
+      ),
+    );
+  }
+
+  // --- Sub-widgets de UI ---
+
+  Widget _buildHeader() {
+    return const Column(
+      children: [
+        Icon(Icons.lock_person, size: 80, color: AppColors.primary),
+        SizedBox(height: 20),
+        Text(
+          'Ponto Eletrônico',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextField(
+      controller: _emailController,
+      decoration: const InputDecoration(
+        labelText: 'E-mail do Funcionário',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.email),
+      ),
+      keyboardType: TextInputType.emailAddress,
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleLogin,
+        child: _isLoading 
+          ? const SizedBox(
+              height: 20, 
+              width: 20, 
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background)
+            ) 
+          : const Text('Entrar'),
       ),
     );
   }

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/login_screen.dart'; // Importe sua tela de login
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   // 1. Garante a inicialização dos bindings do Flutter
   WidgetsFlutterBinding.ensureInitialized();
+
+  // carregar os dados de tradução do português do Brasil:
+  await initializeDateFormatting('pt_BR', null);
 
   // 2. Carrega as variáveis do .env
   await dotenv.load(fileName: ".env");
