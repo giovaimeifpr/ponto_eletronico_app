@@ -27,11 +27,19 @@ class PunchService {
 
       // VALIDAÇÃO DA 1 HORA (Para entry_2)
       if (nextType == 'entry_2') {
-        final lastPunch = DateTime.parse(punchesToday.last['created_at']);
-        final diff = DateTime.now().difference(lastPunch).inMinutes;
-        if (diff < 60) {
-          throw 'Intervalo insuficiente. Faltam ${60 - diff} minutos para completar 1h.';
-        }
+          // Buscamos especificamente o registro de saída do almoço na lista de hoje
+          final exitPunchData = punchesToday.firstWhere(
+            (p) => p['entry_type'] == 'exit_1',
+            orElse: () => throw 'Erro: Registro de saída de intervalo não encontrado.'
+          );
+          
+          final exitTime = DateTime.parse(exitPunchData['created_at']);
+          final diff = DateTime.now().difference(exitTime).inMinutes;
+          
+          if (diff < 60) {
+            // O throw aqui precisa ser capturado pela Home
+            throw 'Intervalo insuficiente. Faltam ${60 - diff} minutos.';
+          }
       }
 
       final position = await _locationService.getCurrentLocation();
@@ -52,9 +60,24 @@ class PunchService {
       throw AppErrors.handle(e);
     }
   }
-  Future<List<Map<String, dynamic>>> fetchTodayHistory(String userId) async {
+
+  Future<List<Map<String, dynamic>>> fetchWeeklyHistory(String userId) async {
     try {
-      return await _repository.getTodayPunches(userId);
+      DateTime agora = DateTime.now();
+      
+      // Pegamos a segunda-feira desta semana às 00:00:00
+      DateTime inicioSemana = agora.subtract(Duration(days: agora.weekday - 1));
+      DateTime segundaFeira = DateTime(inicioSemana.year, inicioSemana.month, inicioSemana.day, 0, 0, 0);
+
+      // Pegamos o final do dia de hoje às 23:59:59
+      DateTime fimDeHoje = DateTime(agora.year, agora.month, agora.day, 23, 59, 59);
+
+      // .toIso8601String() garante o formato YYYY-MM-DDTHH:mm:ss.sss
+      return await _repository.fetchPunchesByDateRange(
+        userId, 
+        segundaFeira.toIso8601String(),
+        fimDeHoje.toIso8601String()
+      );
     } catch (e) {
       throw AppErrors.handle(e);
     }

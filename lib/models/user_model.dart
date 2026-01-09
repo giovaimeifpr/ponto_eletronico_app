@@ -2,6 +2,7 @@ class UserModel {
   final String id;
   final String fullName;
   final String email;
+  final String password;
   final String? jobTitle;
   final bool isAdmin;
 
@@ -9,6 +10,7 @@ class UserModel {
     required this.id,
     required this.fullName,
     required this.email,
+    required this.password,
     this.jobTitle,
     this.isAdmin = false,
   });
@@ -19,6 +21,7 @@ class UserModel {
       id: json['id'],
       fullName: json['full_name'] ?? 'Sem Nome',
       email: json['email'],
+      password: json['password_hash'] ?? '',
       jobTitle: json['job_title'],
       isAdmin: json['is_admin'] ?? false,
     );

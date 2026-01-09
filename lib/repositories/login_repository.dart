@@ -9,7 +9,7 @@ class LoginRepository {
     return await _client
         .from(AppConstants.tableUsers)
         .select()
-        .eq('email', email)
+        .eq('email', email)        
         .single();
   }
 
@@ -20,5 +20,14 @@ class LoginRepository {
         .select()
         .eq('email', email)
         .maybeSingle();
+  }
+  
+  Future<Map<String, dynamic>?> checkSignIn(String email, String password) async { 
+    return await _client
+        .from(AppConstants.tableUsers)
+        .select()
+        .eq('email', email)
+        .eq('password_hash', password)
+        .maybeSingle(); 
   }
 }

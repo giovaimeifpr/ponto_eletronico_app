@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'screens/login_screen.dart'; // Importe sua tela de login
+import 'screens/login/login_screen.dart'; 
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {

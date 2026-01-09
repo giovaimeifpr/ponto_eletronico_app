@@ -15,7 +15,7 @@ class LoginService {
     }
   }
 
-  Future<bool> login(String email) async {
+  Future<bool> login(String email, String password) async {
     try {
       final user = await _repository.checkUserExists(email);
       return user != null;
@@ -23,4 +23,17 @@ class LoginService {
       throw AppErrors.handle(e);
     }
   }
+  Future<UserModel> getUserByEmailAndPassword(String email, String password) async {
+    try {
+      final data = await _repository.checkSignIn(email, password);
+      if (data != null) {
+        return UserModel.fromJson(data);
+      } else {
+        throw ('E-mail ou senha inválidos');
+      }
+    } catch (e) {
+      throw AppErrors.handle(e);
+    }
+  }
+
 }

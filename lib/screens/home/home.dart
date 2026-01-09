@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import '../../models/user_model.dart';
+import '../../services/login_services.dart'; 
+import '../../services/punch_service.dart';
+import '../../core/theme/app_colors.dart'; 
+import 'components/history_table.dart';
+import 'components/user_header.dart';
+import 'components/punch_button.dart';
+import 'components/home_app_bar.dart';
+
+class HomeScreen extends StatefulWidget {
+  final String userEmail;
+  const HomeScreen({super.key, required this.userEmail});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final LoginService _loginService = LoginService();
+  final PunchService _punchService = PunchService();
+  
+  bool _isPunching = false;
+  List<Map<String, dynamic>> _weeklyPunches = [];
+  late Future<UserModel> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializa a busca do usuário uma única vez
+    _userFuture = _loginService.getUserData(widget.userEmail);
+  }
+
+  // --- LÓGICA DE NEGÓCIO ---
+  Future<void> _loadHistory(String userId) async {
+    try {
+      // Mudamos para buscar a semana
+      final history = await _punchService.fetchWeeklyHistory(userId);
+      if (mounted) {
+        setState(() {
+          _weeklyPunches = history; // O nome da variável pode ser mantido ou renomeado para _weeklyPunches
+        });
+      }
+    } catch (e) {
+      debugPrint("Erro ao carregar histórico semanal: $e");
+    }
+  }
+
+  Future<void> _handlePunch(UserModel user, List<Map<String, dynamic>> hojePunches) async {
+    setState(() => _isPunching = true);
+    try {
+      // Agora o service registra baseado apenas nos pontos de hoje
+      await _punchService.registerPunch(user: user, punchesToday: hojePunches);
+      
+      // Recarrega a semana inteira para atualizar a tabela e o botão
+      final updatedHistory = await _punchService.fetchWeeklyHistory(user.id);
+      
+      if (mounted) {
+        setState(() {
+          _weeklyPunches = updatedHistory;
+        });
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      // ... seu tratamento de erro (SnackBar)
+    } finally {
+      if (mounted) setState(() => _isPunching = false);
+    }
+  }
+
+  // --- FEEDBACK VISUAL ---
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success),
+            SizedBox(width: 10),
+            Text('Sucesso!'),
+          ],
+        ),
+        content: const Text('Seu ponto foi registrado e salvo no sistema.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- CONSTRUÇÃO DA TELA (UI) ---
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const HomeAppBar(), 
+      body: FutureBuilder<UserModel>(
+        future: _userFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          }
+          
+          if (!snapshot.hasData) {
+            return const Center(child: Text("Usuário não encontrado."));
+          }
+
+          final user = snapshot.data!;
+          
+          // Dispara a carga do histórico se ainda estiver vazio
+          if (_weeklyPunches.isEmpty) {
+             _loadHistory(user.id);
+          }
+          return _buildSuccessState(user);
+        },
+      ),
+    );
+  }
+  
+    Widget _buildSuccessState(UserModel user) {
+      // ADS: Filtramos a lista semanal para obter apenas os registros de HOJE
+      final DateTime agora = DateTime.now();
+      final List<Map<String, dynamic>> hojePunches = _weeklyPunches.where((p) {
+        final dataPonto = DateTime.parse(p['created_at']);
+        return dataPonto.day == agora.day && 
+              dataPonto.month == agora.month && 
+              dataPonto.year == agora.year;
+      }).toList();
+
+      return SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              UserHeader(user: user),
+              const Divider(height: 40),
+              HistoryTable(punches: _weeklyPunches), // A tabela continua vendo a semana toda
+              const SizedBox(height: 40),
+              PunchButton(
+                isPunching: _isPunching,
+                punches: hojePunches, // O BOTÃO agora vê apenas HOJE
+                onPressed: () => _handlePunch(user, hojePunches), // Passamos o filtro para a função
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+}
