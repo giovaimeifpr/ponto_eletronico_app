@@ -5,29 +5,29 @@
 // para exibir o mês de referência e as datas em português, oferecendo um feedback claro e profissional
 // sobre a jornada de trabalho do colaborador.
 
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/time_formatter.dart';
 
 class HistoryTable extends StatelessWidget {
   final List<Map<String, dynamic>> punches;
+  final int workload;
+  final List<DateTime> displayDays;
+  final bool isMonthly;
+  
 
-  const HistoryTable({super.key, required this.punches});
-
+  const HistoryTable({super.key, required this.punches, required this.workload, required this.displayDays, this.isMonthly = false});
+  
   @override
   Widget build(BuildContext context) {
-    double weeklyTotal = 0;
-
-    // 1. Gerar lista com os dias da semana atual (Segunda a Sexta)
-    DateTime agora = DateTime.now();
-    DateTime segunda = agora.subtract(Duration(days: agora.weekday - 1));
-    List<DateTime> diasDaSemana = List.generate(5, (index) => segunda.add(Duration(days: index)));
+    double periodTotal = 0; // Renomeado de weekly para period (mais genérico)
 
     return Column(
       children: [
+        // Título dinâmico: mostra do primeiro ao último dia da lista recebida
         Text(
-          "Semana de Referência: ${DateFormat('dd/MM').format(segunda)} a ${DateFormat('dd/MM').format(diasDaSemana.last)}",
+          "Período: ${DateFormat('dd/MM').format(displayDays.first)} a ${DateFormat('dd/MM').format(displayDays.last)}",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
@@ -35,7 +35,9 @@ class HistoryTable extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: DataTable(
             columnSpacing: 12,
+            horizontalMargin: 10,
             columns: const [
+              DataColumn(label: Text('Semana')),
               DataColumn(label: Text('Dia')),
               DataColumn(label: Text('E1')),
               DataColumn(label: Text('S1')),
@@ -43,18 +45,20 @@ class HistoryTable extends StatelessWidget {
               DataColumn(label: Text('S2')),
               DataColumn(label: Text('Total')),
             ],
-            // 2. Mapear cada dia da semana para uma linha da tabela
-            rows: diasDaSemana.map((dia) {
+            // 1. Usamos o displayDays que o componente recebeu via construtor
+            rows: displayDays.map((dia) {
               // Filtrar os pontos deste dia específico
               var pontosDoDia = punches.where((p) {
                 DateTime dataPonto = DateTime.parse(p['created_at']);
-                return dataPonto.day == dia.day && dataPonto.month == dia.month;
+                // Comparamos dia, mês e ANO para não misturar dados de anos diferentes
+                return dataPonto.day == dia.day && 
+                      dataPonto.month == dia.month &&
+                      dataPonto.year == dia.year;
               }).toList();
 
               String e1 = "--:--", s1 = "--:--", e2 = "--:--", s2 = "--:--";
               double horasDoDia = 0;
 
-              // Preencher horários
               for (var p in pontosDoDia) {
                 String time = TimeFormatter.formatTimestamp(p['created_at']);
                 switch (p['entry_type']) {
@@ -65,7 +69,7 @@ class HistoryTable extends StatelessWidget {
                 }
               }
 
-              // Calcular total do dia para somar no semanal
+              // Cálculo de horas
               try {
                 if (e1 != "--:--" && s1 != "--:--") {
                   horasDoDia += TimeFormatter.calculateDuration(
@@ -81,48 +85,88 @@ class HistoryTable extends StatelessWidget {
                 }
               } catch (_) {}
               
-              weeklyTotal += horasDoDia;
+              periodTotal += horasDoDia;
 
-              return DataRow(cells: [
-                DataCell(Text(DateFormat('dd/MM').format(dia), style: const TextStyle(fontSize: 12))),
-                DataCell(Text(e1, style: const TextStyle(fontSize: 12))),
-                DataCell(Text(s1, style: const TextStyle(fontSize: 12))),
-                DataCell(Text(e2, style: const TextStyle(fontSize: 12))),
-                DataCell(Text(s2, style: const TextStyle(fontSize: 12))),
-                DataCell(Text("${horasDoDia.toStringAsFixed(1)}h", style: const TextStyle(fontWeight: FontWeight.bold))),
-              ]);
+              // Lógica de Cores Condicionais
+              bool isSabado = dia.weekday == DateTime.saturday;
+              bool isDomingo = dia.weekday == DateTime.sunday;
+
+              // Estilo para Texto (Normal ou Vermelho)
+              TextStyle getStyle({bool isAfternoon = false}) {
+                Color textColor = AppColors.textPrimary;
+                if (isDomingo) {
+                  textColor = AppColors.error;
+                } else if (isSabado) {
+                  textColor = AppColors.warning;
+                }
+                return TextStyle(fontSize: 12, color: textColor);
+              }
+
+              return DataRow(
+                // Opcional: Colorir o fundo da linha inteira se for final de semana
+                color: WidgetStateProperty.resolveWith<Color?>((states) {
+                  if (isDomingo) return AppColors.error.withValues(alpha: 0.05);
+                  if (isSabado) return AppColors.warning.withValues(alpha: 0.05);
+                  return null;
+                }),
+                cells: [
+                  // Coluna 1: Dia da semana por extenso (curto)
+                  DataCell(Text(
+                    DateFormat('E', 'pt_BR').format(dia).toUpperCase().replaceAll('.', ''),
+                    style: getStyle(),
+                  )),
+                  // Coluna 2: Data
+                  DataCell(Text(DateFormat('dd/MM').format(dia), style: getStyle())),
+                  // Colunas de Horários
+                  DataCell(Text(e1, style: getStyle())),
+                  DataCell(Text(s1, style: getStyle())),
+                  DataCell(Text(e2, style: getStyle(isAfternoon: true))),
+                  DataCell(Text(s2, style: getStyle(isAfternoon: true))),
+                  // Coluna Total
+                  DataCell(Text(
+                    "${horasDoDia.toStringAsFixed(1)}h", 
+                    style: getStyle().copyWith(fontWeight: FontWeight.bold),
+                  )),
+                ],
+              );
             }).toList(),
           ),
         ),
         const SizedBox(height: 20),
-        _buildWeeklySummary(weeklyTotal),
+        _buildWeeklySummary(periodTotal),
       ],
     );
   }
 
   Widget _buildWeeklySummary(double totalTrabalhado) {
-    double metaSemanal = 40.0;
-    double saldo = totalTrabalhado - metaSemanal;
+      // 2. Se for mensal, calculamos a meta proporcional (Workload * 4.33 semanas em média)
+      // Ou simplificamos para mostrar apenas o total trabalhado vs meta semanal
+      double metaReferencia = isMonthly ? (workload * 4.33) : workload.toDouble();
+      double saldo = totalTrabalhado - metaReferencia;
 
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text("Total na Semana:", style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(
-            "${totalTrabalhado.toStringAsFixed(1)}h / 40h", 
-            style: TextStyle(
-              color: saldo >= 0 ? Colors.green : Colors.blue, 
-              fontWeight: FontWeight.bold
-            )
-          ),
-        ],
-      ),
-    );
-  }
+      return Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 3. Texto Dinâmico
+            Text(
+              isMonthly ? "Total no Mês:" : "Total na Semana:", 
+              style: const TextStyle(fontWeight: FontWeight.bold)
+            ),          
+            Text(
+              "${totalTrabalhado.toStringAsFixed(1)}h / ${metaReferencia.toStringAsFixed(0)}h",
+              style: TextStyle(
+                color: saldo >= 0 ? Colors.green : Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 }

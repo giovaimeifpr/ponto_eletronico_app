@@ -49,10 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handlePunch(UserModel user, List<Map<String, dynamic>> hojePunches) async {
     setState(() => _isPunching = true);
     try {
-      // Agora o service registra baseado apenas nos pontos de hoje
+      // Tenta registrar o ponto
       await _punchService.registerPunch(user: user, punchesToday: hojePunches);
       
-      // Recarrega a semana inteira para atualizar a tabela e o botão
+      // Se deu certo, busca o histórico semanal atualizado
       final updatedHistory = await _punchService.fetchWeeklyHistory(user.id);
       
       if (mounted) {
@@ -62,7 +62,24 @@ class _HomeScreenState extends State<HomeScreen> {
         _showSuccessDialog();
       }
     } catch (e) {
-      // ... seu tratamento de erro (SnackBar)
+      // TRATAMENTO DE ERRO / AVISO
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text(e.toString())), // Exibe a mensagem do throw
+              ],
+            ),
+            backgroundColor: Colors.orange.shade800, // Cor de alerta
+            behavior: SnackBarBehavior.floating, // Deixa a snackbar "flutuando" acima do botão
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isPunching = false);
     }
@@ -129,6 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget _buildSuccessState(UserModel user) {
       // ADS: Filtramos a lista semanal para obter apenas os registros de HOJE
       final DateTime agora = DateTime.now();
+      final DateTime segunda = agora.subtract(Duration(days: agora.weekday - 1));
+      final List<DateTime> semanaAtual = List.generate(7, (i) => segunda.add(Duration(days: i)));
       final List<Map<String, dynamic>> hojePunches = _weeklyPunches.where((p) {
         final dataPonto = DateTime.parse(p['created_at']);
         return dataPonto.day == agora.day && 
@@ -143,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               UserHeader(user: user),
               const Divider(height: 40),
-              HistoryTable(punches: _weeklyPunches), // A tabela continua vendo a semana toda
+              HistoryTable(punches: _weeklyPunches, workload: user.workload, displayDays: semanaAtual), // A tabela continua vendo a semana toda
               const SizedBox(height: 40),
               PunchButton(
                 isPunching: _isPunching,

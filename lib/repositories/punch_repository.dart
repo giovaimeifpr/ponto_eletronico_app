@@ -37,4 +37,16 @@ class PunchRepository {
       rethrow;
     }
   }
+  Future<List<Map<String, dynamic>>> fetchPunchesByCustomRange(
+      String userId, DateTime start, DateTime end) async {
+      final response = await _client
+          .from('time_entries')
+          .select()
+          .eq('user_id', userId)
+          .gte('created_at', start.toIso8601String())
+          .lte('created_at', end.toIso8601String())
+          .order('created_at', ascending: true);
+
+      return List<Map<String, dynamic>>.from(response);
+  }
 }

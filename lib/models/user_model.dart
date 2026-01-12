@@ -5,12 +5,14 @@ class UserModel {
   final String password;
   final String? jobTitle;
   final bool isAdmin;
+  final int workload;
 
   UserModel({
     required this.id,
     required this.fullName,
     required this.email,
     required this.password,
+    required this.workload,
     this.jobTitle,
     this.isAdmin = false,
   });
@@ -24,6 +26,7 @@ class UserModel {
       password: json['password_hash'] ?? '',
       jobTitle: json['job_title'],
       isAdmin: json['is_admin'] ?? false,
+      workload: (json['workload'] as int?) ?? 40,
     );
   }
 }

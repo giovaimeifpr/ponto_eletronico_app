@@ -28,6 +28,7 @@ class PunchService {
       // VALIDAÇÃO DA 1 HORA (Para entry_2)
       if (nextType == 'entry_2') {
           // Buscamos especificamente o registro de saída do almoço na lista de hoje
+          
           final exitPunchData = punchesToday.firstWhere(
             (p) => p['entry_type'] == 'exit_1',
             orElse: () => throw 'Erro: Registro de saída de intervalo não encontrado.'
@@ -35,6 +36,7 @@ class PunchService {
           
           final exitTime = DateTime.parse(exitPunchData['created_at']);
           final diff = DateTime.now().difference(exitTime).inMinutes;
+   
           
           if (diff < 60) {
             // O throw aqui precisa ser capturado pela Home
@@ -78,6 +80,14 @@ class PunchService {
         segundaFeira.toIso8601String(),
         fimDeHoje.toIso8601String()
       );
+    } catch (e) {
+      throw AppErrors.handle(e);
+    }
+  }
+  Future<List<Map<String, dynamic>>> fetchCustomRange(
+      String userId, DateTime start, DateTime end) async {
+    try {
+      return await _repository.fetchPunchesByCustomRange(userId, start, end);
     } catch (e) {
       throw AppErrors.handle(e);
     }

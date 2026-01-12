@@ -130,5 +130,25 @@ Tratamento de Erros: Padronização do AppErrors.handle para exibir mensagens am
 
 ---
 
+#### **Nota: 12/01/2026**
 
+Progresso do dia:
+
+Extrato Mensal e PDF:
+
+Criação da tela de Histórico Mensal com navegação entre meses.
+Implementação do gerador de PDF (Espelho de Ponto) usando os pacotes pdf e printing.
+Adição de campos de assinatura para o funcionário e para o RH no rodapé do relatório.
+Refatoração de Componentes (Clean Code):
+Parametrização da HistoryTable: agora o mesmo componente exibe tanto a semana (7 dias) quanto o mês (28 a 31 dias).
+Evolução do UserHeader: inclusão de uma trava (flag) para esconder o botão de extrato quando o usuário já está na tela de histórico.
+Lógica de cores para finais de semana mantida e adaptada para a visualização mensal.
+Infraestrutura e Banco de Dados:
+Sincronização de Fuso Horário: Configuração do banco de dados Supabase para o timezone "America/Sao_Paulo" via comando SQL.
+Alinhamento total entre o horário registrado no servidor e o horário local de Brasília, eliminando erros de conversão no PDF.
+
+Regras de Negócio:
+
+Adição do campo "Workload" (carga horária semanal) no banco de dados e no modelo de usuário.
+Cálculo de meta mensal dinâmica baseada na carga horária individual de cada colaborador.
 *Desenvolvido como parte do curso de ADS - IFPR.*
