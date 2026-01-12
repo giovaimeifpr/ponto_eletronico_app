@@ -93,5 +93,42 @@ Segurança de Dados: Implementação de Row Level Security (RLS) no Supabase par
 Ciclo de Vida: Uso estratégico de initState e Future.wait para carregamento encadeado de dados do usuário e histórico.
 
 ---
+#### **Nota: 09/01/2026**
+
+1. Refatoração e Arquitetura (Clean Code)
+
+Modularização da Home: A tela principal (HomeScreen) foi dividida em componentes independentes para melhorar a manutenção e escalabilidade.
+
+HomeAppBar: Gerencia o título e a ação de Logout.
+UserHeader: Exibe informações de perfil do UserModel (foto, nome e cargo).
+HistoryTable: Processa e exibe o histórico semanal de marcações.
+PunchButton: Controla a lógica visual e os estados do registro de ponto.
+
+Refatoração do Login: Implementação de componentes para campos de entrada (LoginInputField) e botão de submissão (LoginSubmitButton), preparando a tela para futuros métodos de autenticação (como Google ou Biometria).
+
+2. Implementações Funcionais (Ponto Eletrônico)
+
+Histórico Semanal: A consulta ao banco de dados foi expandida de "diária" para "semanal" (fetchWeeklyHistory), permitindo que a tabela exiba os registros de segunda a sexta-feira.
+
+Máquina de Estados no Botão: O PunchButton agora identifica dinamicamente o próximo tipo de marcação (Entrada 1, Saída 1, Entrada 2 ou Saída 2) com base nos registros já existentes.
+
+Geofencing: Implementação da validação de localização, bloqueando o registro caso o colaborador esteja fora do raio de distância permitido em relação à empresa.
+
+3. Regras de Negócio e Validações (RN)
+
+Intervalo Interjornada: Implementação da trava de segurança que impede o registro da "Volta do Intervalo" (entry_2) caso não tenha transcorrido o tempo mínimo de 60 minutos desde a saída.
+
+Limite de Marcações: O sistema foi configurado para permitir o máximo de 4 marcações diárias, desativando o botão e exibindo o status de "Ponto Finalizado" após a conclusão.
+
+Sincronização de Horário: A validação da hora do registro passou a ser feita diretamente com o servidor para evitar fraudes por alteração manual no relógio do dispositivo.
+
+4. Correções e Ajustes Técnicos
+
+Filtro de Dados: Ajuste na lógica para que o botão de registro consulte apenas os pontos do dia atual, evitando conflitos com o histórico de dias anteriores da mesma semana.
+
+Tratamento de Erros: Padronização do AppErrors.handle para exibir mensagens amigáveis ao usuário via SnackBar em caso de falha de GPS ou intervalo insuficiente.
+
+---
+
 
 *Desenvolvido como parte do curso de ADS - IFPR.*
