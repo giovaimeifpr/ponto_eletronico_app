@@ -4,6 +4,7 @@ import 'components/login_input_field.dart';
 import 'components/login_button.dart';
 import '../home/home.dart';
 import '../../services/login_services.dart';
+import '../admin/home_admin.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,8 +12,6 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
-// ... imports dos componentes acima ...
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
-    // 1. Valida o formulário usando a GlobalKey (ADS: Garante que os campos não estão vazios)
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
@@ -32,25 +30,34 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 2. Chama o serviço. Se falhar, ele pula direto para o 'catch'
-      final user = await _loginService.getUserByEmailAndPassword(email, password);
+      // 1. O serviço agora retorna o objeto completo do usuário (com a flag is_admin do banco)
+      // Removi o parâmetro 'isAdmin' pois o sistema descobrirá isso após o login
+      final user = await _loginService.getUserByEmailAndPassword(
+        email,
+        password,        
+      );
 
-      // 3. Se chegou aqui, o login foi um sucesso
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(userEmail: user.email),
-          ),
-        );
+        // 2. Lógica de Redirecionamento (Bifurcação)
+        if (user.isAdmin == true) {
+          // Se for admin, vai para a tela de escolha (Portal)
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeAdmin(user: user)),
+          );
+        } else {
+          // Se for usuário comum, vai direto para o registro de ponto
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen(userEmail: user.email)),
+          );
+        }
       }
     } catch (e) {
-      // 4. Captura o erro (E-mail inválido, senha errada ou sem internet)
       if (mounted) {
-        _showSnackBar(e.toString());
+        _showSnackBar(e.toString().replaceAll("Exception:", ""));
       }
     } finally {
-      // 5. Independente de sucesso ou erro, para o loading
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -68,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // SafeArea evita que o conteúdo fique embaixo da barra de status (Xperia)
-      body: SafeArea( 
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -91,10 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     isPassword: true,
                   ),
                   const SizedBox(height: 30),
-                  LoginButton( 
-                    isLoading: _isLoading,
-                    onPressed: _handleLogin,
-                  ),
+                  LoginButton(isLoading: _isLoading, onPressed: _handleLogin),
                 ],
               ),
             ),

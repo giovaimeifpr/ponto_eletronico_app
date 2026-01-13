@@ -6,7 +6,8 @@ import '../../core/theme/app_colors.dart';
 import 'components/history_table.dart';
 import 'components/user_header.dart';
 import 'components/punch_button.dart';
-import 'components/home_app_bar.dart';
+import 'components/custom_app_bar.dart';
+
 
 class HomeScreen extends StatefulWidget {
   final String userEmail;
@@ -115,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const HomeAppBar(), 
+      appBar: const CustomAppBar(title: "Ponto Eletrônico"), 
       body: FutureBuilder<UserModel>(
         future: _userFuture,
         builder: (context, snapshot) {
