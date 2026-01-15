@@ -1,48 +1,59 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../models/user_model.dart';
+import '../../services/user_service.dart';
+import 'admin_user_details.dart'; // Vamos criar este agora
 import '../home/components/custom_app_bar.dart';
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
+
+  @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
+  final UserService _userService = UserService();
+  late Future<List<UserModel>> _usersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersFuture = _userService.getAllUsers();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Painel Administrativo"),
-      body: Column(
-        children: [
-          // Banner de teste para confirmar a navegação
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            color: AppColors.secondary.withValues(alpha: 0.05),
-            child: const Row(
-              children: [
-                Icon(Icons.check_circle, color: AppColors.warning),
-                SizedBox(width: 15),
-                Expanded(
-                  child: Text(
-                    "Módulo Administrativo Carregado com Sucesso!",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold, 
-                      color: AppColors.warning
-                    ),
+      // Usando sua CustomAppBar já com Logout fixo
+      appBar: const CustomAppBar(title: "Gestão de Colaboradores"),
+      body: FutureBuilder<List<UserModel>>(
+        future: _usersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final users = snapshot.data ?? [];
+
+          return ListView.separated(
+            itemCount: users.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              final collaborator = users[index];
+              return ListTile(
+                leading: CircleAvatar(child: Text(collaborator.fullName[0])),
+                title: Text(collaborator.fullName),
+                subtitle: Text(collaborator.jobTitle ?? 'Colaborador'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdminUserDetails(user: collaborator),
                   ),
                 ),
-              ],
-            ),
-          ),
-          
-          const Expanded(
-            child: Center(
-              child: Text(
-                "Área do RH em construção...\nEm breve: Lista de Colaboradores",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.secondary, fontSize: 16),
-              ),
-            ),
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }

@@ -135,4 +135,55 @@ Melhoria na segurança da navegação com o uso de pushAndRemoveUntil no logout,
 
 ---
 
+#### **Nota: 15/01/2026**
+
+Novas Funcionalidades: Módulo Administrativo & Auditoria
+1. Painel de Gestão de Colaboradores:
+
+Implementação de listagem dinâmica de funcionários consumindo dados do Supabase.
+
+Criação de fluxo de navegação hierárquica: Dashboard -> Perfil do Usuário -> Histórico de Ponto.
+
+Integração da CustomAppBar em todas as novas telas administrativas para manter a identidade visual e o botão de logout centralizado.
+
+2. Auditoria Temporal Dinâmica:
+
+Implementação de seletor de mês e ano (showDatePicker) para consulta de períodos retroativos.
+
+Refatoração da busca no banco de dados para suportar intervalos customizados (fetchCustomRange), permitindo ao Admin visualizar qualquer mês (ex: Dezembro/2025) com carregamento instantâneo.
+
+3. Inteligência de Banco de Horas (Regra de Negócio):
+
+Cálculo de Dias Úteis: Migração da meta mensal de "semanas médias (4.33)" para "jornada diária real", baseada nos dias úteis do mês (Segunda a Sexta), eliminando erros de arredondamento.
+
+Saldo Transmissível: Criação do conceito de "Saldo para Mês Subsequente", onde o saldo anterior (positivo ou negativo) é somado ao desempenho do mês atual.
+
+Rodapé de Fechamento: Novo componente visual no histórico que exibe:
+
+Total Trabalhado vs. Meta do Período.
+
+Saldo do Mês Anterior (A compensar).
+
+Saldo do Mês Atual.
+
+Saldo Final para transporte.
+
+4. Persistência e Fechamento de Mês:
+
+Tabela monthly_balances: Criação da estrutura no banco para salvar o "carimbo" do saldo final de cada funcionário.
+
+Operação de Upsert: Implementação de lógica que salva ou atualiza o fechamento, garantindo que o Admin possa re-auditar meses se necessário sem duplicar dados.
+
+Confirmação de Auditoria: Diálogo de confirmação antes de gravar o saldo final no banco de dados.
+
+🛠️ Ajustes Técnicos:
+Correção de bugs de escopo (funções Future dentro do build).
+
+Padronização de Null Safety para campos opcionais como job_title.
+
+Otimização de performance com Future.wait para buscar pontos e saldos anteriores em paralelo.
+
+
+---
+
 *Desenvolvido como parte do curso de ADS - IFPR.*

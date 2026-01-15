@@ -27,25 +27,28 @@ class PunchService {
 
       // VALIDAÇÃO DA 1 HORA (Para entry_2)
       if (nextType == 'entry_2') {
-          // Buscamos especificamente o registro de saída do almoço na lista de hoje
-          
-          final exitPunchData = punchesToday.firstWhere(
-            (p) => p['entry_type'] == 'exit_1',
-            orElse: () => throw 'Erro: Registro de saída de intervalo não encontrado.'
-          );
-          
-          final exitTime = DateTime.parse(exitPunchData['created_at']);
-          final diff = DateTime.now().difference(exitTime).inMinutes;
-   
-          
-          if (diff < 60) {
-            // O throw aqui precisa ser capturado pela Home
-            throw 'Intervalo insuficiente. Faltam ${60 - diff} minutos.';
-          }
+        // Buscamos especificamente o registro de saída do almoço na lista de hoje
+
+        final exitPunchData = punchesToday.firstWhere(
+          (p) => p['entry_type'] == 'exit_1',
+          orElse: () =>
+              throw 'Erro: Registro de saída de intervalo não encontrado.',
+        );
+
+        final exitTime = DateTime.parse(exitPunchData['created_at']);
+        final diff = DateTime.now().difference(exitTime).inMinutes;
+
+        if (diff < 60) {
+          // O throw aqui precisa ser capturado pela Home
+          throw 'Intervalo insuficiente. Faltam ${60 - diff} minutos.';
+        }
       }
 
       final position = await _locationService.getCurrentLocation();
-      final distance = _locationService.calculateDistance(position.latitude, position.longitude);
+      final distance = _locationService.calculateDistance(
+        position.latitude,
+        position.longitude,
+      );
 
       if (distance > AppConstants.allowedRadiusInMeters) {
         throw 'Fora do raio permitido ($distance metros).';
@@ -66,28 +69,76 @@ class PunchService {
   Future<List<Map<String, dynamic>>> fetchWeeklyHistory(String userId) async {
     try {
       DateTime agora = DateTime.now();
-      
+
       // Pegamos a segunda-feira desta semana às 00:00:00
       DateTime inicioSemana = agora.subtract(Duration(days: agora.weekday - 1));
-      DateTime segundaFeira = DateTime(inicioSemana.year, inicioSemana.month, inicioSemana.day, 0, 0, 0);
+      DateTime segundaFeira = DateTime(
+        inicioSemana.year,
+        inicioSemana.month,
+        inicioSemana.day,
+        0,
+        0,
+        0,
+      );
 
       // Pegamos o final do dia de hoje às 23:59:59
-      DateTime fimDeHoje = DateTime(agora.year, agora.month, agora.day, 23, 59, 59);
+      DateTime fimDeHoje = DateTime(
+        agora.year,
+        agora.month,
+        agora.day,
+        23,
+        59,
+        59,
+      );
 
       // .toIso8601String() garante o formato YYYY-MM-DDTHH:mm:ss.sss
       return await _repository.fetchPunchesByDateRange(
-        userId, 
+        userId,
         segundaFeira.toIso8601String(),
-        fimDeHoje.toIso8601String()
+        fimDeHoje.toIso8601String(),
       );
     } catch (e) {
       throw AppErrors.handle(e);
     }
   }
+
   Future<List<Map<String, dynamic>>> fetchCustomRange(
-      String userId, DateTime start, DateTime end) async {
+    String userId,
+    DateTime start,
+    DateTime end,
+  ) async {
     try {
       return await _repository.fetchPunchesByCustomRange(userId, start, end);
+    } catch (e) {
+      throw AppErrors.handle(e);
+    }
+  }
+
+  Future<double> getBalanceForMonth(String userId, DateTime month) async {
+    try {
+      final data = await _repository.fetchBalanceForMonth(userId, month);
+
+      if (data == null) return 0.0; // Se não houver fechamento, saldo é zero
+
+      // Converte o valor do banco (double ou num) para double do Dart
+      return (data['balance_hours'] as num).toDouble();
+    } catch (e) {
+      throw AppErrors.handle(e);
+    }
+  }
+
+  // No seu Service
+  Future<void> saveMonthlyBalance({
+    required String userId,
+    required DateTime month,
+    required double balance,
+  }) async {
+    try {
+      await _repository.upsertMonthlyBalance(
+        userId: userId,
+        month: month,
+        balance: balance,
+      );
     } catch (e) {
       throw AppErrors.handle(e);
     }
