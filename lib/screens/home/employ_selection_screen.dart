@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
-import '../home/employ_selection_screen.dart';
-import 'modules_selection_screen.dart'; // Vamos criar este em seguida
 import '../home/components/custom_app_bar.dart';
 import '../home/components/user_header.dart';
+import '../../core/theme/app_colors.dart';
+import 'vacations/vacations.dart';
+import 'timesheet/timesheet.dart';
+import 'occurrences/occurrences.dart';
 
-class HomeAdmin extends StatelessWidget {
+
+class EmploySelectionScreen extends StatelessWidget {
   final UserModel user;
 
-  const HomeAdmin({super.key, required this.user});
+  const EmploySelectionScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class HomeAdmin extends StatelessWidget {
                   const Icon(
                     Icons.admin_panel_settings,
                     size: 80,
-                    color: Colors.blue,
+                    color: AppColors.primary,
                   ),
                   const SizedBox(height: 10),
 
@@ -43,49 +46,58 @@ class HomeAdmin extends StatelessWidget {
 
                   const SizedBox(height: 20),
                   const Text(
-                    "Selecione como deseja prosseguir:",
+                    "Selecione qual operação deseja fazer:",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 30),
 
                   _buildMenuButton(
                     context,
-                    title: "PAINEL ADMINISTRADOR",
-                    subtitle: "Gestão de equipe, relatórios e ajustes",
-                    icon: Icons.dashboard_customize,
-                    color: Colors.blue.shade700,
+                    title: "FÉRIAS",
+                    subtitle: "Cadastrar Férias",
+                    icon: Icons.calendar_month,
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          // Aqui passamos o usuário logado para a próxima tela
-                          builder: (context) =>
-                              ModulesSelectionScreen(user: user),
+                          builder: (context) => Vacations(user: user),
                         ),
                       );
                     },
                   ),
-
                   const SizedBox(height: 20),
-
                   _buildMenuButton(
                     context,
-                    title: "PAINEL COLABORADOR",
-                    subtitle: "Acessar tela de opções do colaborador",
+                    title: "PONTO ELETRÔNICO",
+                    subtitle: "Registro do ponto eletrônico",
                     icon: Icons.timer_outlined,
-                    color: Colors.green.shade700,
+                    color: AppColors.success,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              EmploySelectionScreen(user: user),
+                          builder: (context) => Timesheet(userEmail: user.email),
                         ),
                       );
                     },
                   ),
-                  // Um pequeno respiro no final para não colar na borda ao rolar
                   const SizedBox(height: 20),
+                  _buildMenuButton(
+                    context,
+                    title: "OCORRÊNCIAS",
+                    subtitle: "Reportar ocorrência no ponto eletrônico",
+                    icon: Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Occurrences(user: user),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

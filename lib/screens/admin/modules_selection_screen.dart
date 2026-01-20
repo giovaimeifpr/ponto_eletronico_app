@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
-import '../home/employ_selection_screen.dart';
-import 'modules_selection_screen.dart'; // Vamos criar este em seguida
+import 'monthly_balances/timesheet_dashboard.dart';
+import 'reports/reports_dashboard.dart';
+import 'occurrences/occurrences_dashboard.dart';
+import 'vacations/vacations_dashboard.dart';
 import '../home/components/custom_app_bar.dart';
 import '../home/components/user_header.dart';
+import '../../core/theme/app_colors.dart';
 
-class HomeAdmin extends StatelessWidget {
+class ModulesSelectionScreen extends StatelessWidget {
   final UserModel user;
 
-  const HomeAdmin({super.key, required this.user});
+  const ModulesSelectionScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class HomeAdmin extends StatelessWidget {
                   const Icon(
                     Icons.admin_panel_settings,
                     size: 80,
-                    color: Colors.blue,
+                    color: AppColors.primary,
                   ),
                   const SizedBox(height: 10),
 
@@ -43,49 +46,74 @@ class HomeAdmin extends StatelessWidget {
 
                   const SizedBox(height: 20),
                   const Text(
-                    "Selecione como deseja prosseguir:",
+                    "Selecione qual módulo de gestão dos colaboradores deseja acessar:",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 30),
 
                   _buildMenuButton(
                     context,
-                    title: "PAINEL ADMINISTRADOR",
-                    subtitle: "Gestão de equipe, relatórios e ajustes",
-                    icon: Icons.dashboard_customize,
-                    color: Colors.blue.shade700,
+                    title: "FÉRIAS",
+                    subtitle: "Gestão de férias",
+                    icon: Icons.calendar_month,
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          // Aqui passamos o usuário logado para a próxima tela
-                          builder: (context) =>
-                              ModulesSelectionScreen(user: user),
+                          builder: (context) => const VacationsDashboard(),
                         ),
                       );
                     },
                   ),
-
                   const SizedBox(height: 20),
-
                   _buildMenuButton(
                     context,
-                    title: "PAINEL COLABORADOR",
-                    subtitle: "Acessar tela de opções do colaborador",
+                    title: "PONTO ELETRÔNICO",
+                    subtitle: "Gestão do ponto eletrônico",
                     icon: Icons.timer_outlined,
-                    color: Colors.green.shade700,
+                    color: AppColors.success,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              EmploySelectionScreen(user: user),
+                          builder: (context) => const TimesheetDashboard(),
                         ),
                       );
                     },
                   ),
-                  // Um pequeno respiro no final para não colar na borda ao rolar
                   const SizedBox(height: 20),
+                  _buildMenuButton(
+                    context,
+                    title: "RELATÓRIOS DE ESTATISTICAS",
+                    subtitle: "Gestão de relatórios e estatísticas",
+                    icon: Icons.print_rounded,
+                    color: AppColors.textPrimary,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ReportsDashboard(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMenuButton(
+                    context,
+                    title: "OCORRÊNCIAS",
+                    subtitle: "Gestão de ocorrências das faltas e atrasos",
+                    icon: Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OccurrencesDashboard(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

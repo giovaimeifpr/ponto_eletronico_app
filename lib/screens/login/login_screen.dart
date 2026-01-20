@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'components/login_header.dart';
 import 'components/login_input_field.dart';
 import 'components/login_button.dart';
-import '../home/home.dart';
+import '../home/employ_selection_screen.dart';
 import '../../services/login_services.dart';
 import '../admin/home_admin.dart';
 
@@ -39,6 +39,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         // 2. Lógica de Redirecionamento (Bifurcação)
+
+        if(user.onVacation == true) {
+          // Se o usuário estiver de férias, mostra mensagem e não deixa entrar
+          _showSnackBar("Usuário está de férias. Acesso negado.");
+          return;
+        } 
         if (user.isAdmin == true) {
           // Se for admin, vai para a tela de escolha (Portal)
           Navigator.pushReplacement(
@@ -49,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Se for usuário comum, vai direto para o registro de ponto
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen(userEmail: user.email)),
+            MaterialPageRoute(builder: (context) => EmploySelectionScreen(user: user)),
           );
         }
       }

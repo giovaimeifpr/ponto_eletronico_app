@@ -183,6 +183,53 @@ Padronização de Null Safety para campos opcionais como job_title.
 
 Otimização de performance com Future.wait para buscar pontos e saldos anteriores em paralelo.
 
+---
+#### **Nota: 20/01/2026**
+
+🚀 Novas Funcionalidades e Arquitetura
+1. Reestruturação do Fluxo de Acesso (Login & Portais):
+
+Login Inteligente: Implementação de lógica de redirecionamento pós-autenticação. O sistema agora identifica o perfil do usuário e apresenta o portal adequado.
+
+Portal de Acesso Admin: Nova interface para administradores com botões de acesso rápido ao "Painel do Gestor" e ao "Registro de Ponto" pessoal, unificando a experiência.
+
+Portal do Colaborador (Modularizado): Criação de uma tela de seleção de módulos para o usuário comum, separando claramente as funcionalidades de Ponto, Férias e Ocorrências.
+
+2. Módulo de Gestão de Férias (RF05):
+
+Modelagem de Banco de Dados: Criação da tabela vacations no Supabase com suporte a parcelamento em até 3 períodos (period_index).
+
+Planejamento Anual Único: Interface redesenhada para que o colaborador planeje seus 30 dias de uma só vez, oferecendo uma visão sistêmica do descanso anual.
+
+Status e Feedback: Integração de campos de status (pending, approved, rejected) com exibição visual de motivos de rejeição diretamente no card da parcela.
+
+3. Motor de Regras de Negócio (CLT & Compliance):
+
+Validação de Direito: Implementação de trava de segurança que verifica a hire_date (data de admissão) e só permite solicitações após o primeiro ano de empresa.
+
+Matemática de Precisão: - Soma obrigatória de exatamente 30 dias.
+
+Regra de no mínimo um período de 14 dias.
+
+Trava para parcelas menores que 5 dias.
+
+Detecção de Sobreposição (Overlap): Algoritmo que impede o usuário de selecionar datas conflitantes entre os três períodos do planejamento.
+
+4. UI/UX e Localização:
+
+Internacionalização (i18n): Configuração global do app para pt-BR, traduzindo calendários, dias da semana e seletores nativos.
+
+Performance de Calendário: Ajuste no showDateRangePicker para o modo calendarOnly, reduzindo o consumo de memória ao carregar meses futuros.
+
+Feedback em Tempo Real: Contador dinâmico de dias por parcela e somatório total acumulado com cores de alerta (Azul para planejamento em curso / Verde para 30 dias fechados).
+
+🛠️ Especificações Técnicas Adicionadas
+Banco de Dados: Inclusão da coluna hire_date na tabela users e novas políticas de segurança para a tabela vacations.
+
+Service Layer: VacationService consolidado como o cérebro das regras de negócio, protegendo o repositório de dados inválidos.
+
+Componentes: Uso de DateTimeRange, ExpansionTile para detalhes de rejeição e LinearProgressIndicator para controle de saldo de dias.
+
 
 ---
 

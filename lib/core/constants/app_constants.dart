@@ -2,6 +2,7 @@ class AppConstants {
   // Nomes das tabelas no Supabase
   static const String tableUsers = 'users';
   static const String tableTimeEntries = 'time_entries';
+  static const String tableVacations = 'vacations';
 
   // Configurações de Geofencing (RN02)
   static const double allowedRadiusInMeters = 300.0; // Raio de 300 metros

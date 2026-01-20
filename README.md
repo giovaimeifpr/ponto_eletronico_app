@@ -42,7 +42,7 @@ SUPABASE_KEY=sua-chave-anon-aqui
 ```
 ---
 
-### 📅 Atualizações *([Link])(updates.md)*.
+### 📅 Atualizações *([Link](updates.md))*.
 
 
 

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../models/user_model.dart';
-import '../../services/user_service.dart';
-import 'admin_user_details.dart'; // Vamos criar este agora
-import '../home/components/custom_app_bar.dart';
+import '../../../models/user_model.dart';
+import '../../../services/user_service.dart';
+import 'timesheet_user_details.dart'; 
+import '../../home/components/custom_app_bar.dart';
 
-class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+class TimesheetDashboard extends StatefulWidget {
+  const TimesheetDashboard({super.key});
 
   @override
-  State<AdminDashboard> createState() => _AdminDashboardState();
+  State<TimesheetDashboard> createState() => _TimesheetDashboardState();
 }
 
-class _AdminDashboardState extends State<AdminDashboard> {
+class _TimesheetDashboardState extends State<TimesheetDashboard> {
   final UserService _userService = UserService();
   late Future<List<UserModel>> _usersFuture;
 
@@ -36,7 +36,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           return ListView.separated(
             itemCount: users.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (_,_) => const Divider(),
             itemBuilder: (context, index) {
               final collaborator = users[index];
               return ListTile(
@@ -47,7 +47,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminUserDetails(user: collaborator),
+                    builder: (context) => TimesheetUserDetails(user: collaborator),
                   ),
                 ),
               );

@@ -4,7 +4,9 @@ class UserModel {
   final String email;
   final String password;
   final String? jobTitle;
+  final DateTime? hireDate;
   final bool isAdmin;
+  final bool onVacation;
   final int workload;
 
   UserModel({
@@ -13,8 +15,10 @@ class UserModel {
     required this.email,
     required this.password,
     required this.workload,
+    required this.hireDate,
     this.jobTitle,
     this.isAdmin = false,
+    this.onVacation = false,
   });
 
   // Este é o método que "limpa" o JSON que você viu no terminal
@@ -26,7 +30,11 @@ class UserModel {
       password: json['password_hash'] ?? '',
       jobTitle: json['job_title'],
       isAdmin: json['is_admin'] ?? false,
+      onVacation: json['is_on_vacation'] ?? false,
       workload: (json['workload'] as int?) ?? 40,
+      hireDate: json['hire_date'] != null
+          ? DateTime.parse(json['hire_date'])
+          : null, // Converte a string para DateTime
     );
   }
 }

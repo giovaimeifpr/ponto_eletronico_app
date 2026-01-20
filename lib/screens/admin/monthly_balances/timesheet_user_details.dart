@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/user_model.dart';
-import '../home/components/history_table.dart';
-import '../../services/pdf_printer_service.dart';
-import '../../services/punch_service.dart';
-import '../home/components/custom_app_bar.dart';
-import '../home/components/user_header.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../models/user_model.dart';
+import '../../home/components/history_table.dart';
+import '../../../services/pdf_printer_service.dart';
+import '../../../services/punch_service.dart';
+import '../../home/components/custom_app_bar.dart';
+import '../../home/components/user_header.dart';
+import '../../../core/theme/app_colors.dart';
 
-class AdminUserDetails extends StatefulWidget {
+class TimesheetUserDetails extends StatefulWidget {
   final UserModel user;
-  const AdminUserDetails({super.key, required this.user});
+  const TimesheetUserDetails({super.key, required this.user});
 
   @override
-  State<AdminUserDetails> createState() => _AdminUserDetailsState();
+  State<TimesheetUserDetails> createState() => _TimesheetUserDetailsState();
 }
 
-class _AdminUserDetailsState extends State<AdminUserDetails> {
+class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
   DateTime _selectedMonth = DateTime.now();
   List<Map<String, dynamic>> _punches = [];
   bool _isLoading = false;
@@ -35,9 +35,27 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
     setState(() => _isLoading = true);
 
     try {
-      final DateTime mesAnterior = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
-      final DateTime start = DateTime(_selectedMonth.year, _selectedMonth.month, 1, 0, 0, 0);
-      final DateTime end = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0, 23, 59, 59);
+      final DateTime mesAnterior = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month - 1,
+        1,
+      );
+      final DateTime start = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month,
+        1,
+        0,
+        0,
+        0,
+      );
+      final DateTime end = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
 
       final results = await Future.wait([
         _punchService.getBalanceForMonth(widget.user.id, mesAnterior),
@@ -85,8 +103,14 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
           "O saldo final de ${saldoFinal.toStringAsFixed(1)}h será transportado para o próximo mês. Confirma?",
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Confirmar")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Confirmar"),
+          ),
         ],
       ),
     );
@@ -99,8 +123,14 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
           month: _selectedMonth,
           balance: saldoFinal,
         );
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Mês fechado com sucesso!")),
+          const SnackBar(
+            content: Text("Mês fechado com sucesso!"),
+            backgroundColor: AppColors.success, // Usa o verde do seu tema
+            behavior: SnackBarBehavior
+                .floating, // Deixa o aviso "flutuando" acima do rodapé
+          ),
         );
         _fetchPunches();
       } catch (e) {
@@ -111,7 +141,11 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final int daysInMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
+    final int daysInMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+    ).day;
     final List<DateTime> diasDoMes = List.generate(
       daysInMonth,
       (i) => DateTime(_selectedMonth.year, _selectedMonth.month, i + 1),
@@ -138,7 +172,10 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
             child: UserHeader(user: widget.user, showAction: false),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: OutlinedButton.icon(
               onPressed: _pickMonth,
               icon: const Icon(Icons.calendar_month),
@@ -164,7 +201,7 @@ class _AdminUserDetailsState extends State<AdminUserDetails> {
                       isMonthly: true,
                       saldoAnterior: _saldoAnterior,
                       // PASSANDO OS PARÂMETROS QUE A TABELA CALCULA DE VOLTA PARA A FUNÇÃO
-                      onClosingMonth: (trabalhado, meta) => 
+                      onClosingMonth: (trabalhado, meta) =>
                           _handleMonthClosing(trabalhado, meta),
                     ),
                   ),
