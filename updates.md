@@ -230,7 +230,12 @@ Service Layer: VacationService consolidado como o cérebro das regras de negóci
 
 Componentes: Uso de DateTimeRange, ExpansionTile para detalhes de rejeição e LinearProgressIndicator para controle de saldo de dias.
 
-
 ---
+
+#### **Nota: 21/01/2026**
+
+1. Restruturação no módulo de férias para respeitar as regras de negócios.
+Foi criado um componente vacation_picker para lidar só com essas regras.
+
 
 *Desenvolvido como parte do curso de ADS - IFPR.*
