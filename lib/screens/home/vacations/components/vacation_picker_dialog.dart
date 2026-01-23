@@ -1,105 +1,146 @@
 import 'package:flutter/material.dart';
 
 class VacationPickerDialog {
-  static Future<DateTimeRange?> show(
-    BuildContext context, {
+  // Criamos um método estático que pode ser chamado de qualquer lugar
+  static Future<void> show({
+    required BuildContext context,
     required int index,
     required List<DateTimeRange?> selectedPeriods,
+    required Function(DateTimeRange) onSelected, // Callback para atualizar a tela pai
   }) async {
-    // Helpers internos
-    bool hasOverlap(DateTimeRange a, DateTimeRange b) {
-      return a.start.isBefore(b.end) && b.start.isBefore(a.end);
-    }
+    int daysInOtherPeriods = 0;
+    List<DateTimeRange> otherRanges = [];
 
-    // Preparação de dados fora do loop do diálogo
-    final List<DateTimeRange> otherPeriods = [];
-    int daysUsedInOthers = 0;
     for (int i = 0; i < selectedPeriods.length; i++) {
       if (i != index && selectedPeriods[i] != null) {
-        otherPeriods.add(selectedPeriods[i]!);
-        daysUsedInOthers += selectedPeriods[i]!.end.difference(selectedPeriods[i]!.start).inDays + 1;
+        daysInOtherPeriods +=
+            selectedPeriods[i]!.end.difference(selectedPeriods[i]!.start).inDays + 1;
+        otherRanges.add(selectedPeriods[i]!);
       }
     }
 
     DateTime? start;
     DateTime? end;
 
-    return showDialog<DateTimeRange>(
+    // O showDialog deve ser retornado ou aguardado
+    await showDialog<DateTimeRange>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setLocalState) {
-            // 1. Cálculos Reativos
-            int currentTotalDays = 0;
+            int currentTotal = 0;
             if (start != null && end != null) {
-              currentTotalDays = end!.difference(start!).inDays + 1;
+              currentTotal = end!.difference(start!).inDays + 1;
             }
 
-            final int totalDaysAfterSelection = daysUsedInOthers + currentTotalDays;
-            final int remainingAfterSelection = 30 - totalDaysAfterSelection;
+            int grandTotal = daysInOtherPeriods + currentTotal;
+            int remaining = 30 - grandTotal;
 
-            // 2. Validações
-            bool hasOverlapWithOthers = false;
+            bool min5Days = currentTotal >= 5;
+            bool notExceed30 = grandTotal <= 30;
+            bool isOverlap = false;
             if (start != null && end != null) {
-              final currentRange = DateTimeRange(start: start!, end: end!);
-              hasOverlapWithOthers = otherPeriods.any((p) => hasOverlap(currentRange, p));
+              final current = DateTimeRange(start: start!, end: end!);
+              isOverlap = otherRanges.any(
+                (o) => current.start.isBefore(o.end) && o.start.isBefore(current.end),
+              );
             }
 
-            bool validMinDays = currentTotalDays >= 5;
-            bool isValidFlow = remainingAfterSelection == 0 || remainingAfterSelection >= 5;
-            bool notExceed30 = totalDaysAfterSelection <= 30;
+            bool validFlow = remaining == 0 || remaining >= 5;
+            bool alreadyHas14 = otherRanges.any(
+              (r) => (r.end.difference(r.start).inDays + 1) >= 14,
+            );
             
-            bool alreadyHas14 = otherPeriods.any((p) => (p.end.difference(p.start).inDays + 1) >= 14);
-            bool requirement14Met = totalDaysAfterSelection == 30 
-                ? (alreadyHas14 || currentTotalDays >= 14) 
-                : true;
+            bool requirement14Met = true;
+            if (grandTotal == 30) {
+              requirement14Met = alreadyHas14 || currentTotal >= 14;
+            }
 
-            bool canConfirm = start != null && end != null && validMinDays && 
-                             isValidFlow && notExceed30 && !hasOverlapWithOthers;
+            bool lastPeriodMustComplete30 = true;
+            if (index == 2 && currentTotal > 0) {
+              lastPeriodMustComplete30 = grandTotal == 30;
+            }
+
+            bool canConfirm = start != null &&
+                end != null &&
+                min5Days &&
+                notExceed30 &&
+                !isOverlap &&
+                validFlow &&
+                requirement14Met &&
+                lastPeriodMustComplete30;
 
             return AlertDialog(
-              title: Text("Período da ${index + 1}ª Parcela", textAlign: TextAlign.center),
-              content: SingleChildScrollView(
+              title: Text("Parcela ${index + 1}"),
+              content: SizedBox(
+                width: 350,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CalendarDatePicker(
-                      initialDate: start ?? DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 730)),
-                      onDateChanged: (date) {
-                        setLocalState(() {
-                          if (start == null || end != null) {
-                            start = date;
-                            end = null;
-                          } else {
-                            if (date.isBefore(start!)) {
-                              end = start; start = date;
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: CalendarDatePicker(
+                        initialDate: start ?? DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                        onDateChanged: (date) {
+                          setLocalState(() {
+                            if (start == null || end != null) {
+                              start = date;
+                              end = null;
                             } else {
-                              end = date;
+                              if (date.isBefore(start!)) {
+                                end = start;
+                                start = date;
+                              } else {
+                                end = date;
+                              }
                             }
-                          }
-                        });
-                      },
+                          });
+                        },
+                      ),
                     ),
                     const Divider(),
-                    _buildValidationMessage(
-                      currentTotalDays: currentTotalDays,
-                      remainingAfterSelection: remainingAfterSelection,
-                      hasOverlap: hasOverlapWithOthers,
-                      isValidFlow: isValidFlow,
-                      notExceed30: notExceed30,
-                      requirement14Met: requirement14Met,
-                      isClosed: totalDaysAfterSelection == 30,
-                    ),
+                    const SizedBox(height: 8),
+                    if (currentTotal > 0) ...[
+                      Text(
+                        currentTotal < 5
+                            ? "Dias selecionados: $currentTotal, mínimo é 5 dias."
+                            : "Dias selecionados: $currentTotal",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: (currentTotal < 5 || !notExceed30)
+                              ? Colors.red
+                              : Colors.blue,
+                        ),
+                      ),
+                      if (isOverlap)
+                        const Text("⚠️ Conflito de datas!",
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
+                      if (!validFlow && grandTotal < 30)
+                        Text("⚠️ Erro: Restariam $remaining dias (mín. 5).",
+                            style: const TextStyle(color: Colors.red, fontSize: 12)),
+                      if (index == 2 && grandTotal != 30)
+                        Text("⚠️ Deve completar 30 dias (Faltam: ${30 - (daysInOtherPeriods + currentTotal)}).",
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                            textAlign: TextAlign.center),
+                      if (grandTotal == 30 && !requirement14Met)
+                        const Text("⚠️ CLT: Pelo menos uma parcela deve ter 14 dias.",
+                            style: TextStyle(color: Colors.red, fontSize: 12)),
+                    ] else
+                      const Text("Selecione o início e o fim no calendário",
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
                 TextButton(
-                  onPressed: canConfirm 
-                      ? () => Navigator.pop(context, DateTimeRange(start: start!, end: end!)) 
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text("Cancelar"),
+                ),
+                TextButton(
+                  onPressed: canConfirm
+                      ? () => Navigator.pop(dialogContext, DateTimeRange(start: start!, end: end!))
                       : null,
                   child: const Text("OK"),
                 ),
@@ -108,38 +149,10 @@ class VacationPickerDialog {
           },
         );
       },
-    );
-  }
-
-  static Widget _buildValidationMessage({
-    required int currentTotalDays,
-    required int remainingAfterSelection,
-    required bool hasOverlap,
-    required bool isValidFlow,
-    required bool notExceed30,
-    required bool requirement14Met,
-    required bool isClosed,
-  }) {
-    if (currentTotalDays == 0) return const Text("Selecione o início e fim", style: TextStyle(fontSize: 12));
-
-    List<Widget> warnings = [];
-    TextStyle errStyle = const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w500);
-
-    if (currentTotalDays < 5) {
-      warnings.add(Text("Mínimo de 5 dias obrigatório.", style: errStyle));
-    } else if (!notExceed30) {
-      warnings.add(Text("Ultrapassou o limite de 30 dias.", style: errStyle));
-    } else if (hasOverlap) {
-      warnings.add(Text("Conflito com outro período.", style: errStyle));
-    } else if (!isValidFlow) {
-      warnings.add(Text("Inválido: restariam $remainingAfterSelection dias (mín. 5).", style: errStyle));
-    } else if (isClosed && !requirement14Met) {
-      warnings.add(Text("CLT: Uma das parcelas deve ter ≥ 14 dias.", style: errStyle));
-    } else {
-      warnings.add(Text("Selecionado: $currentTotalDays dias", style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)));
-      if (isClosed) warnings.add(const Text("Saldo de 30 dias completo!", style: TextStyle(color: Colors.green, fontSize: 12)));
-    }
-
-    return Column(children: warnings);
+    ).then((result) {
+      if (result != null) {
+        onSelected(result); // Envia o resultado de volta para a tela pai
+      }
+    });
   }
 }

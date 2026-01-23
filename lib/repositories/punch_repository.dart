@@ -75,6 +75,7 @@ class PunchRepository {
         .maybeSingle(); // Retorna um Map ou null se não houver fechamento
 
     return response;
+    
   }
 
   // No seu Repository

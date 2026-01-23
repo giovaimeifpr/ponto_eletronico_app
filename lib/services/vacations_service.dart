@@ -23,8 +23,11 @@ class VacationService {
     try {
       // 1. Filtrar apenas períodos preenchidos
       final List<DateTimeRange> validPeriods = periods.whereType<DateTimeRange>().toList();
+      int currentYear = DateTime.now().year;
 
       if (validPeriods.isEmpty) throw "Selecione ao menos um período de férias.";
+
+      
 
       // 2. Verificação de Sobreposição (Overlap)
       for (int i = 0; i < validPeriods.length; i++) {
@@ -64,12 +67,14 @@ class VacationService {
         }
       }
 
+      await _repository.deleteYearPlanning(user.id, currentYear);
+
       // 5. Preparar dados para o Repositório (Limpando as anteriores para o ano)
       // Nota: Em um sistema real, aqui você usaria uma Transaction para deletar as antigas e inserir as novas
       for (int i = 0; i < validPeriods.length; i++) {
         final data = {
           'user_id': user.id,
-          'year_reference': DateTime.now().year,
+          'year_reference': currentYear,
           'period_index': i + 1,
           'start_date': validPeriods[i].start.toIso8601String().split('T')[0],
           'end_date': validPeriods[i].end.toIso8601String().split('T')[0],

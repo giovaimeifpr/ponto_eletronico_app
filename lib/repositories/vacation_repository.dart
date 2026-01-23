@@ -44,4 +44,16 @@ class VacationRepository {
       rethrow;
     }
   }
+
+  Future<void> deleteYearPlanning(String userId, int year) async {
+  try {
+    await _client
+        .from(AppConstants.tableVacations)
+        .delete()
+        .eq('user_id', userId)
+        .eq('year_reference', year);
+  } catch (e) {
+    rethrow;
+  }
+}
 }

@@ -237,5 +237,12 @@ Componentes: Uso de DateTimeRange, ExpansionTile para detalhes de rejeição e L
 1. Restruturação no módulo de férias para respeitar as regras de negócios.
 Foi criado um componente vacation_picker para lidar só com essas regras.
 
+---
+
+#### **Nota: 23/01/2026**
+
+1. Correção de erros de salvamento, edição no módulo férias. Foi finalizado as correções.
+
+---
 
 *Desenvolvido como parte do curso de ADS - IFPR.*

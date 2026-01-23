@@ -12,6 +12,7 @@ import '../components/custom_app_bar.dart';
 class Timesheet extends StatefulWidget {
   final String userEmail;
   const Timesheet({super.key, required this.userEmail});
+  
 
   @override
   State<Timesheet> createState() => _TimesheetState();
@@ -19,11 +20,11 @@ class Timesheet extends StatefulWidget {
 
 class _TimesheetState extends State<Timesheet> {
   final LoginService _loginService = LoginService();
-  final PunchService _punchService = PunchService();
-  
+  final PunchService _punchService = PunchService();   
   bool _isPunching = false;
   List<Map<String, dynamic>> _weeklyPunches = [];
   late Future<UserModel> _userFuture;
+  double _monthlyBalance = 0.0;
 
   @override
   void initState() {
@@ -31,19 +32,25 @@ class _TimesheetState extends State<Timesheet> {
     // Inicializa a busca do usuário uma única vez
     _userFuture = _loginService.getUserData(widget.userEmail);
   }
+  
 
   // --- LÓGICA DE NEGÓCIO ---
   Future<void> _loadHistory(String userId) async {
     try {
-      // Mudamos para buscar a semana
       final history = await _punchService.fetchWeeklyHistory(userId);
+      
+      // BUSCA O SALDO: Exemplo pegando o mês atual (ou anterior se preferir)
+      final DateTime currentMonthYear = DateTime(DateTime.now().year, DateTime.now().month);
+      final balance = await _punchService.getBalanceForMonth(userId, currentMonthYear);
+
       if (mounted) {
         setState(() {
-          _weeklyPunches = history; // O nome da variável pode ser mantido ou renomeado para _weeklyPunches
+          _weeklyPunches = history;
+          _monthlyBalance = balance; // Atualiza o saldo aqui
         });
       }
     } catch (e) {
-      debugPrint("Erro ao carregar histórico semanal: $e");
+      debugPrint("Erro ao carregar dados: $e");
     }
   }
 
@@ -163,7 +170,7 @@ class _TimesheetState extends State<Timesheet> {
             children: [
               UserHeader(user: user),
               const Divider(height: 40),
-              HistoryTable(punches: _weeklyPunches, workload: user.workload, displayDays: semanaAtual), // A tabela continua vendo a semana toda
+              HistoryTable(punches: _weeklyPunches, workload: user.workload, displayDays: semanaAtual, saldoAnterior: _monthlyBalance,), // A tabela continua vendo a semana toda
               const SizedBox(height: 40),
               PunchButton(
                 isPunching: _isPunching,
