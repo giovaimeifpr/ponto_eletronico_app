@@ -143,4 +143,61 @@ class PunchService {
       throw AppErrors.handle(e);
     }
   }
+
+  Future<Map<String, dynamic>> getFullMonthlyData(
+    String userId,
+    DateTime selectedMonth,
+  ) async {
+    try {
+      final DateTime mesAnterior = DateTime(
+        selectedMonth.year,
+        selectedMonth.month - 1,
+        1,
+      );
+      final DateTime start = DateTime(
+        selectedMonth.year,
+        selectedMonth.month,
+        1,
+        0,
+        0,
+        0,
+      );
+      final DateTime end = DateTime(
+        selectedMonth.year,
+        selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+
+      final results = await Future.wait([
+        getBalanceForMonth(userId, mesAnterior),
+        fetchCustomRange(userId, start, end),
+      ]);
+
+      // IGUAL AO TIMESHEETUSERDETAILS:
+      final double saldoAnterior = results[0] as double;
+
+      // AQUI ESTÁ O SEGREDO:
+      // Primeiro garantimos que é uma List, depois forçamos o tipo do mapa interno.
+      final List<dynamic> punchesRaw = results[1] as List;
+      final List<Map<String, dynamic>> punches = punchesRaw
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      return {
+        'saldoAnterior': saldoAnterior,
+        'punches': punches,
+        'diasDoMes': List.generate(
+          end.day,
+          (i) => DateTime(selectedMonth.year, selectedMonth.month, i + 1),
+        ),
+      };
+    } catch (e) {
+      // Se der erro aqui, o print vai nos dizer se é no cast ou na busca
+      print("Erro interno no getFullMonthlyData: $e");
+      throw AppErrors.handle(e);
+    }
+  }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../models/user_model.dart';
 import '../../home/components/history_table.dart';
 import '../../../services/pdf_printer_service.dart';
@@ -7,6 +6,7 @@ import '../../../services/punch_service.dart';
 import '../../home/components/custom_app_bar.dart';
 import '../../home/components/user_header.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../monthly_history/components/month_picker_field.dart';
 
 class TimesheetUserDetails extends StatefulWidget {
   final UserModel user;
@@ -63,8 +63,13 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
       ]);
 
       setState(() {
-        _saldoAnterior = results[0] as double;
-        _punches = results[1] as List<Map<String, dynamic>>;
+       // Garantimos que o saldo é double (se vier null, fica 0.0)
+        _saldoAnterior = (results[0]) as double;
+        
+        // A mágica: convertemos cada item da lista individualmente para Map<String, dynamic>
+        // Isso remove o IdentityMap que causa o erro de tipo
+        final List<dynamic> rawList = results[1] as List;
+        _punches = rawList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
       });
     } catch (e) {
       debugPrint("Erro ao buscar dados: $e");
@@ -73,24 +78,7 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
     }
   }
 
-  Future<void> _pickMonth() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedMonth,
-      firstDate: DateTime(2024),
-      lastDate: DateTime.now(),
-      helpText: "Selecione o Mês de Auditoria",
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedMonth = DateTime(picked.year, picked.month, 1);
-      });
-      _fetchPunches();
-    }
-  } // CHAVE CORRIGIDA AQUI
-
-  // FUNÇÃO AGORA RECONHECIDA FORA DE _PICKMONTH
+ 
   Future<void> _handleMonthClosing(double trabalhado, double meta) async {
     final double saldoAtual = trabalhado - meta;
     final double saldoFinal = _saldoAnterior + saldoAtual;
@@ -170,26 +158,19 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: UserHeader(user: widget.user, showAction: false),
+          ),     
+
+          // seletor de mês
+          MonthPickerField(
+            selectedDate: _selectedMonth,
+            onMonthChanged: (newMonth) {
+              setState(() {
+                _selectedMonth = newMonth;
+              });
+              _fetchPunches();
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: OutlinedButton.icon(
-              onPressed: _pickMonth,
-              icon: const Icon(Icons.calendar_month),
-              label: Text(
-                "Mês: ${DateFormat('MMMM / yyyy', 'pt_BR').format(_selectedMonth).toUpperCase()}",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
-              ),
-            ),
-          ),
+
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())

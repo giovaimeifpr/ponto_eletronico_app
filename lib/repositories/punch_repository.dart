@@ -56,14 +56,17 @@ class PunchRepository {
         .lte('created_at', end.toIso8601String())
         .order('created_at', ascending: true);
 
-    return List<Map<String, dynamic>>.from(response);
+    // Em vez de apenas .from(response), mapeamos cada item
+    // para garantir que ele seja um Map<String, dynamic> padrão
+    return (response as List)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   Future<Map<String, dynamic>?> fetchBalanceForMonth(
     String userId,
     DateTime month,
   ) async {
-    // Formata para '2025-12-01' para bater com o tipo DATE do banco
     final String monthDate =
         "${month.year}-${month.month.toString().padLeft(2, '0')}-01";
 
@@ -71,11 +74,13 @@ class PunchRepository {
         .from('monthly_balances')
         .select()
         .eq('user_id', userId)
-        .eq('month_year', monthDate) // Ajuste para o nome da coluna no banco
-        .maybeSingle(); // Retorna um Map ou null se não houver fechamento
+        .eq('month_year', monthDate)
+        .maybeSingle();
 
-    return response;
-    
+    if (response == null) return null;
+
+    // CONVERSÃO ESSENCIAL: Transforma o IdentityMap em Map comum
+    return Map<String, dynamic>.from(response);
   }
 
   // No seu Repository

@@ -244,5 +244,31 @@ Foi criado um componente vacation_picker para lidar só com essas regras.
 1. Correção de erros de salvamento, edição no módulo férias. Foi finalizado as correções.
 
 ---
+#### **Nota: 26/01/2026**
+
+1. RESOLUÇÃO DO ERRO DE TIPAGEM (IdentityMap):
+- Identificamos que o driver do Supabase retorna um 'IdentityMap', que causava falha ao tentar converter diretamente para List<Map<String, dynamic>>.
+- Solução: Implementamos uma limpeza de dados no Service e Repository utilizando o padrão:
+  (response as List).map((item) => Map<String, dynamic>.from(item)).toList();
+- Isso garantiu que os dados vindos do banco fossem convertidos em Mapas nativos do Dart, compatíveis com a HistoryTable.
+
+2. CORREÇÃO DE NULIDADE (Null check operator):
+- Tratamos o erro "type 'Null' is not a subtype of type 'List<Map<String, dynamic>>'".
+- Causa: Tentativa de renderizar a HistoryTable antes dos dados assíncronos estarem prontos.
+- Solução: Adicionamos proteções de nulidade (?? []) e melhoramos o controle do estado _isLoading para garantir que o widget só processe dados válidos.
+
+3. SINCRONIZAÇÃO ENTRE TELAS (Padrão TimesheetUserDetails):
+- Usamos a lógica da tela de Auditoria (que estava funcional) para espelhar o comportamento na MonthlyHistoryScreen.
+- Padronizamos as chamadas de busca de saldo (getBalanceForMonth) e busca de batidas (fetchCustomRange) para rodarem em paralelo com Future.wait, otimizando a performance.
+
+4. REFATORAÇÃO DE COMPONENTES (MonthPickerField):
+- Extraímos o seletor de meses para um componente reutilizável e independente.
+- Aplicamos o padrão "Data Down, Events Up": o widget recebe a data por parâmetro e devolve a alteração via callback (onMonthChanged).
+- Transformamos o widget em StatelessWidget para evitar conflitos de estado interno e facilitar a manutenção.
+
+
+---
+
+
 
 *Desenvolvido como parte do curso de ADS - IFPR.*

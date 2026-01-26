@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/user_model.dart';
 import '../../services/punch_service.dart';
 import '../home/components/history_table.dart';
@@ -7,6 +6,7 @@ import '../home/components/user_header.dart';
 import '../../services/pdf_printer_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../home/components/custom_app_bar.dart';
+import 'components/month_picker_field.dart';
 
 class MonthlyHistoryScreen extends StatefulWidget {
   final UserModel user;
@@ -18,151 +18,129 @@ class MonthlyHistoryScreen extends StatefulWidget {
 }
 
 class _MonthlyHistoryScreenState extends State<MonthlyHistoryScreen> {
-  final PunchService _punchService = PunchService();
-  final PdfPrinterService _pdfService = PdfPrinterService();
-
-  DateTime _selectedDate = DateTime.now();
-  List<Map<String, dynamic>> _monthlyPunches = [];
+  DateTime _selectedMonth = DateTime.now();
+  List<Map<String, dynamic>> _punches = [];
   bool _isLoading = false;
+  double _saldoAnterior = 0.0;
+
+  final PdfPrinterService _pdfService = PdfPrinterService();
+  final PunchService _punchService = PunchService();
 
   @override
   void initState() {
     super.initState();
-    _loadMonthlyData();
+    _fetchPunches();
   }
 
-  Future<void> _loadMonthlyData() async {
+  Future<void> _fetchPunches() async {
     setState(() => _isLoading = true);
+
     try {
-      // Calcula primeiro e último dia do mês selecionado
-      final start = DateTime(_selectedDate.year, _selectedDate.month, 1);
-      final end = DateTime(
-        _selectedDate.year,
-        _selectedDate.month + 1,
+      final DateTime mesAnterior = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month - 1,
+        1,
+      );
+      final DateTime start = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month,
+        1,
+        0,
+        0,
+        0,
+      );
+      final DateTime end = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + 1,
         0,
         23,
         59,
         59,
       );
 
-      final data = await _punchService.fetchCustomRange(
-        widget.user.id,
-        start,
-        end,
-      );
-      setState(() => _monthlyPunches = data);
+      final results = await Future.wait([
+        _punchService.getBalanceForMonth(widget.user.id, mesAnterior),
+        _punchService.fetchCustomRange(widget.user.id, start, end),
+      ]);
+
+      setState(() {
+       // Garantimos que o saldo é double (se vier null, fica 0.0)
+        _saldoAnterior = (results[0]) as double;
+        
+        // A mágica: convertemos cada item da lista individualmente para Map<String, dynamic>
+        // Isso remove o IdentityMap que causa o erro de tipo
+        final List<dynamic> rawList = results[1] as List;
+        _punches = rawList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+      });
+    } catch (e) {
+      debugPrint("Erro ao buscar dados: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final int diasNoMes = DateTime(
-      _selectedDate.year,
-      _selectedDate.month + 1,
-      0,
-    ).day;
+    // PADRONIZAÇÃO: Lógica para gerar a lista de dias do mês atual.
+    // DateTime(ano, mes + 1, 0) retorna o último dia do mês atual.
+    final int ultimoDia = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
     final List<DateTime> diasDoMes = List.generate(
-      diasNoMes,
-      (i) => DateTime(_selectedDate.year, _selectedDate.month, i + 1),
+      ultimoDia,
+      (i) => DateTime(_selectedMonth.year, _selectedMonth.month, i + 1),
     );
-   return Scaffold(
-  // Trocamos 'actions' por 'extraActions' que é o parâmetro do nosso componente
-  appBar: CustomAppBar(
-    title: "Histórico Mensal",
-    extraActions: [
-      Padding(
-        padding: const EdgeInsets.only(right: 8.0),
-        child: TextButton.icon(
-          onPressed: () => _pdfService.generateMonthlyReport(
-            user: widget.user,
-            punches: _monthlyPunches,
-            displayDays: diasDoMes,
-          ),
-          icon: const Icon(
-            Icons.picture_as_pdf,
-            color: AppColors.primary, // Ajustado para branco para contrastar na AppBar
-          ),
-          label: const Text(
-            "Gerar PDF",
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
+
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: "Histórico Mensal",
+        extraActions: [
+          // Botão de PDF padronizado para usar os dados carregados nesta tela
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf, color: AppColors.primary),
+            onPressed: () => _pdfService.generateMonthlyReport(
+              user: widget.user,
+              punches: _punches,
+              displayDays: diasDoMes,
             ),
           ),
-        ),
+        ],
       ),
-    ],
-  ),
-  body: Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24.0,
-          vertical: 16.0,
-        ),
-        child: Center(
-          child: UserHeader(user: widget.user, showAction: false),
-        ),
-      ),
-      _buildMonthSelector(),
-      Expanded(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: HistoryTable(
-                  punches: _monthlyPunches,
-                  workload: widget.user.workload,
-                  displayDays: diasDoMes,
-                  isMonthly: true,
-                ),
-              ),
-      ),
-    ],
-  ),
-); 
- }
-
-  Widget _buildMonthSelector() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios),
-            onPressed: () {
-              setState(
-                () => _selectedDate = DateTime(
-                  _selectedDate.year,
-                  _selectedDate.month - 1,
-                ),
-              );
-              _loadMonthlyData();
+          // Header reutilizável com dados do usuário
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: UserHeader(user: widget.user, showAction: false),
+          ),
+          
+          // Seletor de Mês 
+          MonthPickerField(
+            selectedDate: _selectedMonth,
+            onMonthChanged: (newMonth) {
+              setState(() {
+                _selectedMonth = newMonth;
+              });
+              _fetchPunches();
             },
           ),
-          Text(
-            DateFormat(
-              'MMMM yyyy',
-              'pt_BR',
-            ).format(_selectedDate).toUpperCase(),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios),
-            onPressed: () {
-              setState(
-                () => _selectedDate = DateTime(
-                  _selectedDate.year,
-                  _selectedDate.month + 1,
-                ),
-              );
-              _loadMonthlyData();
-            },
+          
+          
+          // ÁREA DA TABELA: Expandida para ocupar o resto da tela
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    child: HistoryTable(
+                      punches: _punches ,
+                      workload: widget.user.workload,
+                      displayDays: diasDoMes,
+                      isMonthly: true, // Indica para a tabela usar lógica mensal
+                      saldoAnterior: _saldoAnterior, // Repassa o saldo vindo do banco
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
+ 
 }

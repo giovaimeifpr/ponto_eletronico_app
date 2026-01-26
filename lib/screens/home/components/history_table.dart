@@ -17,7 +17,7 @@ class HistoryTable extends StatelessWidget {
   final int workload;
   final List<DateTime> displayDays;
   final bool isMonthly;
-  final double saldoAnterior;
+  final double? saldoAnterior;
   final Function(double trabalhado, double meta)? onClosingMonth;
 
   const HistoryTable({

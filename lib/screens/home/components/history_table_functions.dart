@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
-
 class HistoryTableFunctions extends StatelessWidget {
   final List<Map<String, dynamic>> punches;
   final int workload;
   final List<DateTime> displayDays;
   final bool isMonthly;
-  final double saldoAnterior;
+  final double? saldoAnterior; // Transformado em opcional para segurança
   final Function(double trabalhado, double meta)? onClosingMonth;
-  
-  
+
   const HistoryTableFunctions({
     super.key,
     required this.punches,
@@ -23,16 +21,23 @@ class HistoryTableFunctions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Nota: O valor aqui deve ser passado pela HistoryTable. 
+    // Se a intenção é usar o componente de forma isolada, 
+    // garantimos que o valor inicial não quebre o layout.
     return buildWeeklySummary(0.0);
   }
 
- Widget buildWeeklySummary(double totalTrabalhado) {
-    // Cálculo da meta e saldos
+  Widget buildWeeklySummary(double totalTrabalhado) {
+    // 1. BLINDAGEM CONTRA NULOS (Prevenção do erro JSNoSuchMethodError)
+    // Garantimos que nenhuma variável usada em cálculos ou formatação seja null
+    final double safeTotalTrabalhado = totalTrabalhado; 
+    final double safeSaldoAnterior = saldoAnterior ?? 0.0;
+    
+    // 2. CÁLCULO DA META
     double metaReferencia;
 
     if (isMonthly) {
-      // 1. Descobrimos quantos dias de semana (Seg-Sex) existem no mês exibido
-      // displayDays é a lista que você já passa para o componente
+      // Descobrimos quantos dias de semana (Seg-Sex) existem no mês exibido
       int diasUteis = displayDays
           .where(
             (date) =>
@@ -40,15 +45,17 @@ class HistoryTableFunctions extends StatelessWidget {
                 date.weekday != DateTime.sunday,
           )
           .length;
-      double jornadaSemanal = workload / 5; // Jornada diária baseada na semanal          
-      metaReferencia = jornadaSemanal * diasUteis;
+      
+      // Jornada diária baseada na semanal (ex: 44h / 5 = 8.8h)
+      double jornadaDiaria = workload / 5;           
+      metaReferencia = jornadaDiaria * diasUteis;
     } else {
       metaReferencia = workload.toDouble();
     }
 
-    
-    double saldoDoMes = totalTrabalhado - metaReferencia;
-    double saldoSubsequente = saldoAnterior + saldoDoMes;
+    // 3. CÁLCULOS DE SALDO
+    double saldoDoMes = safeTotalTrabalhado - metaReferencia;
+    double saldoSubsequente = safeSaldoAnterior + saldoDoMes;
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -68,16 +75,16 @@ class HistoryTableFunctions extends StatelessWidget {
           // LINHA 1: TOTAL TRABALHADO / META
           _buildFooterRow(
             isMonthly ? "Trabalhado no Mês:" : "Trabalhado na Semana:",
-            "${totalTrabalhado.toStringAsFixed(1)}h / ${metaReferencia.toStringAsFixed(1)}h",
+            "${safeTotalTrabalhado.toStringAsFixed(1)}h / ${metaReferencia.toStringAsFixed(1)}h",
             Colors.black,
           ),
           const Divider(),
 
-          // LINHA 2: SALDO DO MÊS ANTERIOR
+          // LINHA 2: SALDO DO MÊS ANTERIOR (Seguro contra Null)
           _buildFooterRow(
             "Saldo Anterior a compensar:",
-            "${saldoAnterior >= 0 ? '+' : ''}${saldoAnterior.toStringAsFixed(1)}h",
-            saldoAnterior >= 0 ? AppColors.success : AppColors.error,
+            "${safeSaldoAnterior >= 0 ? '+' : ''}${safeSaldoAnterior.toStringAsFixed(1)}h",
+            safeSaldoAnterior >= 0 ? AppColors.success : AppColors.error,
           ),
 
           // LINHA 3: SALDO DO MÊS ATUAL
@@ -104,12 +111,13 @@ class HistoryTableFunctions extends StatelessWidget {
               saldoSubsequente >= 0 ? AppColors.success : AppColors.error,
               isBold: true,
             ),
-          ), // O Container termina aqui!
-          // LINHA 5: BOTÃO DE FECHAMENTO (FICA DENTRO DA COLUMN, FORA DO CONTAINER ACIMA)
+          ),
+
+          // LINHA 5: BOTÃO DE FECHAMENTO
           if (isMonthly && onClosingMonth != null) ...[
             const SizedBox(height: 15),
             ElevatedButton.icon(
-              onPressed: () => onClosingMonth!(totalTrabalhado, metaReferencia),
+              onPressed: () => onClosingMonth!(safeTotalTrabalhado, metaReferencia),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -127,7 +135,6 @@ class HistoryTableFunctions extends StatelessWidget {
     );
   }
 
-  // Função auxiliar para criar as linhas dentro do rodapé
   Widget _buildFooterRow(
     String label,
     String value,
