@@ -3,6 +3,7 @@ class AppConstants {
   static const String tableUsers = 'users';
   static const String tableTimeEntries = 'time_entries';
   static const String tableVacations = 'vacations';
+  static const String tableMonthlyBalances = 'monthly_balances';
 
   // Configurações de Geofencing (RN02)
   static const double allowedRadiusInMeters = 300.0; // Raio de 300 metros
@@ -14,3 +15,4 @@ class AppConstants {
   // Mensagens padrão
   static const String appName = 'Ponto Eletrônico';
 }
+

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
-import 'monthly_balances/timesheet_dashboard.dart';
-import 'reports/reports_dashboard.dart';
-import 'occurrences/occurrences_dashboard.dart';
-import 'vacations/vacations_dashboard.dart';
-import '../home/components/custom_app_bar.dart';
-import '../home/components/user_header.dart';
+import '../../components/layout/custom_app_bar.dart';
+import '../../components/layout/user_header.dart';
 import '../../core/theme/app_colors.dart';
+import 'vacations/vacations.dart';
+import 'timesheet/timesheet.dart';
+import 'occurrences/occurrences.dart';
 
-class ModulesSelectionScreen extends StatelessWidget {
+
+class EmploySelectionScreen extends StatelessWidget {
   final UserModel user;
 
-  const ModulesSelectionScreen({super.key, required this.user});
+  const EmploySelectionScreen({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class ModulesSelectionScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
                   const Text(
-                    "Selecione qual módulo de gestão dos colaboradores deseja acessar:",
+                    "Selecione qual operação deseja fazer:",
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 30),
@@ -54,14 +54,14 @@ class ModulesSelectionScreen extends StatelessWidget {
                   _buildMenuButton(
                     context,
                     title: "FÉRIAS",
-                    subtitle: "Gestão de férias",
+                    subtitle: "Cadastrar Férias",
                     icon: Icons.calendar_month,
                     color: AppColors.primary,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const VacationsDashboard(),
+                          builder: (context) => Vacations(user: user),
                         ),
                       );
                     },
@@ -70,30 +70,14 @@ class ModulesSelectionScreen extends StatelessWidget {
                   _buildMenuButton(
                     context,
                     title: "PONTO ELETRÔNICO",
-                    subtitle: "Gestão do ponto eletrônico",
+                    subtitle: "Registro do ponto eletrônico",
                     icon: Icons.timer_outlined,
                     color: AppColors.success,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const TimesheetDashboard(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildMenuButton(
-                    context,
-                    title: "RELATÓRIOS DE ESTATISTICAS",
-                    subtitle: "Gestão de relatórios e estatísticas",
-                    icon: Icons.print_rounded,
-                    color: AppColors.textPrimary,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ReportsDashboard(),
+                          builder: (context) => Timesheet(userEmail: user.email),
                         ),
                       );
                     },
@@ -102,14 +86,14 @@ class ModulesSelectionScreen extends StatelessWidget {
                   _buildMenuButton(
                     context,
                     title: "OCORRÊNCIAS",
-                    subtitle: "Gestão de ocorrências das faltas e atrasos",
+                    subtitle: "Reportar ocorrência no ponto eletrônico",
                     icon: Icons.warning_amber_rounded,
                     color: AppColors.error,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const OccurrencesDashboard(),
+                          builder: (context) => Occurrences(user: user),
                         ),
                       );
                     },

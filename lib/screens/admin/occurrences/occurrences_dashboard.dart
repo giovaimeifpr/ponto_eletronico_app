@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
 import '../../../services/user_service.dart';
 import 'occurrences_user_details.dart'; 
-import '../../home/components/custom_app_bar.dart';
+import '../../../components/layout/custom_app_bar.dart';
 
 class OccurrencesDashboard extends StatefulWidget {
   const OccurrencesDashboard({super.key});

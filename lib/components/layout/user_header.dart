@@ -1,9 +1,9 @@
 // Este componente exibe o perfil do colaborador.
 
 import 'package:flutter/material.dart';
-import '../../../models/user_model.dart';
-import '../../monthly_history/monthly_history.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../models/user_model.dart';
+import '../../screens/monthly_history/monthly_history.dart';
+import '../../core/theme/app_colors.dart';
 
 class UserHeader extends StatelessWidget {
   final UserModel user;

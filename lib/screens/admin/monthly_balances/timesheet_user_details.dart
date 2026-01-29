@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
-import '../../home/components/history_table.dart';
+import '../../../components/layout/history_table.dart';
 import '../../../services/pdf_printer_service.dart';
 import '../../../services/punch_service.dart';
-import '../../home/components/custom_app_bar.dart';
-import '../../home/components/user_header.dart';
+import '../../../components/layout/custom_app_bar.dart';
+import '../../../components/layout/user_header.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../monthly_history/components/month_picker_field.dart';
+import '../../../components/layout/month_picker_field.dart';
+import '../../../core/utils/time_formatter.dart';
 
 class TimesheetUserDetails extends StatefulWidget {
   final UserModel user;
@@ -17,7 +18,7 @@ class TimesheetUserDetails extends StatefulWidget {
 }
 
 class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
-  DateTime _selectedMonth = DateTime.now();
+  DateTime _selectedMonth = TimeFormatter.dateNow;
   List<Map<String, dynamic>> _punches = [];
   bool _isLoading = false;
   double _saldoAnterior = 0.0;
@@ -63,13 +64,15 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
       ]);
 
       setState(() {
-       // Garantimos que o saldo é double (se vier null, fica 0.0)
+        // Garantimos que o saldo é double (se vier null, fica 0.0)
         _saldoAnterior = (results[0]) as double;
-        
+
         // A mágica: convertemos cada item da lista individualmente para Map<String, dynamic>
         // Isso remove o IdentityMap que causa o erro de tipo
         final List<dynamic> rawList = results[1] as List;
-        _punches = rawList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        _punches = rawList
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
       });
     } catch (e) {
       debugPrint("Erro ao buscar dados: $e");
@@ -78,7 +81,6 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
     }
   }
 
- 
   Future<void> _handleMonthClosing(double trabalhado, double meta) async {
     final double saldoAtual = trabalhado - meta;
     final double saldoFinal = _saldoAnterior + saldoAtual;
@@ -158,7 +160,7 @@ class _TimesheetUserDetailsState extends State<TimesheetUserDetails> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: UserHeader(user: widget.user, showAction: false),
-          ),     
+          ),
 
           // seletor de mês
           MonthPickerField(

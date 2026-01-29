@@ -1,7 +1,7 @@
 // Este componente lida com a moldura superior e a navegação de saída.
 
 import 'package:flutter/material.dart';
-import '../../../screens/login/login_screen.dart';
+import '../../screens/login/login_screen.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;

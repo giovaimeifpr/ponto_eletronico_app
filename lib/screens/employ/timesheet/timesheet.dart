@@ -3,10 +3,11 @@ import '../../../models/user_model.dart';
 import '../../../services/login_services.dart';
 import '../../../services/punch_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../components/history_table.dart';
-import '../components/user_header.dart';
-import '../components/punch_button.dart';
-import '../components/custom_app_bar.dart';
+import '../../../components/layout/history_table.dart';
+import '../../../components/layout/user_header.dart';
+import '../../../components/ui/punch_button.dart';
+import '../../../components/layout/custom_app_bar.dart';
+import '../../../core/utils/time_formatter.dart';
 
 class Timesheet extends StatefulWidget {
   final String userEmail;
@@ -40,28 +41,16 @@ class _TimesheetState extends State<Timesheet> {
     setState(() => _isPunching = true);
 
     try {
-      final DateTime agora = DateTime.now();
-
-      final DateTime segunda = DateTime(
-        agora.year,
-        agora.month,
-        agora.day,
-      ).subtract(Duration(days: agora.weekday - 1));
-
-      final DateTime domingo = DateTime(
-        segunda.year,
-        segunda.month,
-        segunda.day + 6,
-        23,
-        59,
-        59,
-      );
-
-      final DateTime mesAnterior = DateTime(agora.year, agora.month - 1, 1);
-
       final results = await Future.wait([
-        _punchService.getBalanceForMonth(userId, mesAnterior),
-        _punchService.fetchCustomRange(userId, segunda, domingo),
+        _punchService.getBalanceForMonth(
+          userId,
+          TimeFormatter.beginningOfPreviousMonth,
+        ),
+        _punchService.fetchCustomRange(
+          userId,
+          TimeFormatter.beginOfWeek,
+          TimeFormatter.endOfWeek,
+        ),
       ]);
 
       final List<dynamic> rawList = results[1] as List;
@@ -175,7 +164,7 @@ class _TimesheetState extends State<Timesheet> {
           }
 
           final user = snapshot.data!;
-         
+
           return _buildSuccessState(user);
         },
       ),
@@ -183,18 +172,15 @@ class _TimesheetState extends State<Timesheet> {
   }
 
   Widget _buildSuccessState(UserModel user) {
-    // ADS: Filtramos a lista semanal para obter apenas os registros de HOJE
-    final DateTime agora = DateTime.now();
-    final DateTime segunda = agora.subtract(Duration(days: agora.weekday - 1));
+    final monday = TimeFormatter.beginOfWeek;
+
     final List<DateTime> semanaAtual = List.generate(
       7,
-      (i) => segunda.add(Duration(days: i)),
+      (i) => monday.add(Duration(days: i)),
     );
+
     final List<Map<String, dynamic>> hojePunches = _weeklyPunches.where((p) {
-      final dataPonto = DateTime.parse(p['created_at']);
-      return dataPonto.day == agora.day &&
-          dataPonto.month == agora.month &&
-          dataPonto.year == agora.year;
+      return TimeFormatter.isSameDay(p['created_at'], TimeFormatter.dateNow);
     }).toList();
 
     return SingleChildScrollView(

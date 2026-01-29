@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 import '../../../models/user_model.dart';
 import '../../../models/vacation_model.dart';
 import '../../../services/vacations_service.dart';
-import '../../home/components/custom_app_bar.dart';
+import '../../../components/layout/custom_app_bar.dart';
 import '../../../core/theme/app_colors.dart';
-import 'components/vacation_picker_dialog.dart';
+import '../../../components/layout/vacation_picker_dialog.dart';
 
 class Vacations extends StatefulWidget {
   final UserModel user;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
-import '../../home/components/custom_app_bar.dart';
+import '../../../components/layout/custom_app_bar.dart';
 
 class OccurrencesUserDetails extends StatefulWidget {
   final UserModel user;

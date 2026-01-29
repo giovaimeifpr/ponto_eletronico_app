@@ -27,7 +27,7 @@ class PunchRepository {
   ) async {
     try {
       final response = await _client
-          .from('time_entries')
+          .from(AppConstants.tableTimeEntries)
           .select()
           .eq('user_id', userId)
           .gte(
@@ -49,7 +49,7 @@ class PunchRepository {
     DateTime end,
   ) async {
     final response = await _client
-        .from('time_entries')
+        .from(AppConstants.tableTimeEntries)
         .select()
         .eq('user_id', userId)
         .gte('created_at', start.toIso8601String())
@@ -71,7 +71,7 @@ class PunchRepository {
         "${month.year}-${month.month.toString().padLeft(2, '0')}-01";
 
     final response = await _client
-        .from('monthly_balances')
+        .from(AppConstants.tableMonthlyBalances)
         .select()
         .eq('user_id', userId)
         .eq('month_year', monthDate)

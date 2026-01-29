@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/login/login_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/constants/app_constants.dart';
 
 void main() async {
   // 1. Garante a inicialização dos bindings do Flutter
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('pt', 'BR')],
       debugShowCheckedModeBanner: false,
-      title: 'Ponto Eletrônico',
+      title: AppConstants.appName,
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const LoginScreen(), // Começa pela tela de login
     );

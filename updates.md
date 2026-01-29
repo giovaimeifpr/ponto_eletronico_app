@@ -266,6 +266,17 @@ Foi criado um componente vacation_picker para lidar só com essas regras.
 - Aplicamos o padrão "Data Down, Events Up": o widget recebe a data por parâmetro e devolve a alteração via callback (onMonthChanged).
 - Transformamos o widget em StatelessWidget para evitar conflitos de estado interno e facilitar a manutenção.
 
+---
+#### **Nota: 29/01/2026**
+
+
+1. Foi melhorado a arquitetura de pastas do projeto, para deixar mais limpa.
+Movido algumas pastas e componentes para suas pastas correlatas.
+layout, ui, utils, components, etc.
+
+2. Foi refatorado o arquivo time_formatter para armazenar mais funções padrões e serem usadas em todo projeto.
+Revisado alguns arquivos que ainda não aproveitavam essas classe padrões.
+
 
 ---
 

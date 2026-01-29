@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/punch_service.dart';
-import '../home/components/history_table.dart';
-import '../home/components/user_header.dart';
+import '../../components/layout/history_table.dart';
+import '../../components/layout/user_header.dart';
 import '../../services/pdf_printer_service.dart';
 import '../../core/theme/app_colors.dart';
-import '../home/components/custom_app_bar.dart';
-import 'components/month_picker_field.dart';
+import '../../components/layout/custom_app_bar.dart';
+import '../../components/layout/month_picker_field.dart';
+import '../../core/utils/time_formatter.dart';
 
 class MonthlyHistoryScreen extends StatefulWidget {
   final UserModel user;
@@ -18,7 +19,7 @@ class MonthlyHistoryScreen extends StatefulWidget {
 }
 
 class _MonthlyHistoryScreenState extends State<MonthlyHistoryScreen> {
-  DateTime _selectedMonth = DateTime.now();
+  DateTime _selectedMonth = TimeFormatter.dateNow;
   List<Map<String, dynamic>> _punches = [];
   bool _isLoading = false;
   double _saldoAnterior = 0.0;
@@ -35,8 +36,10 @@ class _MonthlyHistoryScreenState extends State<MonthlyHistoryScreen> {
   Future<void> _fetchPunches() async {
     setState(() => _isLoading = true);
 
-    try {
-      final DateTime mesAnterior = DateTime(
+
+  try {
+
+    final DateTime mesAnterior = DateTime(
         _selectedMonth.year,
         _selectedMonth.month - 1,
         1,
@@ -56,7 +59,7 @@ class _MonthlyHistoryScreenState extends State<MonthlyHistoryScreen> {
         23,
         59,
         59,
-      );
+      );      
 
       final results = await Future.wait([
         _punchService.getBalanceForMonth(widget.user.id, mesAnterior),
@@ -78,6 +81,7 @@ class _MonthlyHistoryScreenState extends State<MonthlyHistoryScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

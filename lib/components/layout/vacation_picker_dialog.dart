@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/time_formatter.dart';
 
 class VacationPickerDialog {
   // Criamos um método estático que pode ser chamado de qualquer lugar
@@ -80,9 +82,9 @@ class VacationPickerDialog {
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 320),
                       child: CalendarDatePicker(
-                        initialDate: start ?? DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                        initialDate: start ?? TimeFormatter.dateNow,
+                        firstDate: TimeFormatter.dateNow,
+                        lastDate: TimeFormatter.dateNow.add(const Duration(days: 730)),
                         onDateChanged: (date) {
                           setLocalState(() {
                             if (start == null || end != null) {
@@ -110,26 +112,26 @@ class VacationPickerDialog {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: (currentTotal < 5 || !notExceed30)
-                              ? Colors.red
-                              : Colors.blue,
+                              ? AppColors.error
+                              : AppColors.primary,
                         ),
                       ),
                       if (isOverlap)
                         const Text("⚠️ Conflito de datas!",
-                            style: TextStyle(color: Colors.red, fontSize: 12)),
+                            style: TextStyle(color: AppColors.error, fontSize: 12)),
                       if (!validFlow && grandTotal < 30)
                         Text("⚠️ Erro: Restariam $remaining dias (mín. 5).",
-                            style: const TextStyle(color: Colors.red, fontSize: 12)),
+                            style: const TextStyle(color: AppColors.error, fontSize: 12)),
                       if (index == 2 && grandTotal != 30)
                         Text("⚠️ Deve completar 30 dias (Faltam: ${30 - (daysInOtherPeriods + currentTotal)}).",
-                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                            style: const TextStyle(color: AppColors.error, fontSize: 12),
                             textAlign: TextAlign.center),
                       if (grandTotal == 30 && !requirement14Met)
                         const Text("⚠️ CLT: Pelo menos uma parcela deve ter 14 dias.",
-                            style: TextStyle(color: Colors.red, fontSize: 12)),
+                            style: TextStyle(color: AppColors.error, fontSize: 12)),
                     ] else
                       const Text("Selecione o início e o fim no calendário",
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ],
                 ),
               ),

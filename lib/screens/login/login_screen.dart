@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'components/login_header.dart';
-import 'components/login_input_field.dart';
-import 'components/login_button.dart';
-import '../home/employ_selection_screen.dart';
+import '../../components/ui/login_header.dart';
+import '../../components/ui/login_input_field.dart';
+import '../../components/ui/login_button.dart';
+import '../employ/employ_selection_screen.dart';
 import '../../services/login_services.dart';
 import '../admin/home_admin.dart';
 

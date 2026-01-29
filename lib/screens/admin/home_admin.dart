@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
-import '../home/employ_selection_screen.dart';
-import 'modules_selection_screen.dart'; // Vamos criar este em seguida
-import '../home/components/custom_app_bar.dart';
-import '../home/components/user_header.dart';
+import '../employ/employ_selection_screen.dart';
+import 'admin_selection_screen.dart'; // Vamos criar este em seguida
+import '../../components/layout/custom_app_bar.dart';
+import '../../components/layout/user_header.dart';
 
 class HomeAdmin extends StatelessWidget {
   final UserModel user;
@@ -60,7 +60,7 @@ class HomeAdmin extends StatelessWidget {
                         MaterialPageRoute(
                           // Aqui passamos o usuário logado para a próxima tela
                           builder: (context) =>
-                              ModulesSelectionScreen(user: user),
+                              AdminSelectionScreen(user: user),
                         ),
                       );
                     },

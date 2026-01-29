@@ -7,9 +7,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/time_formatter.dart';
-import 'history_table_functions.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/time_formatter.dart';
+import '../../core/utils/history_table_functions.dart';
 
 
 class HistoryTable extends StatelessWidget {
